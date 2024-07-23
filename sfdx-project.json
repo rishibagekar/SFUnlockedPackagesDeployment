@@ -1,34 +1,15 @@
 {
-    "namespace": "spaghettiCMD",
+    "name": "SFUnlockedPackagesDeployment",
+    "namespace": "",
     "sfdcLoginUrl": "https://login.salesforce.com",
     "sourceApiVersion": "50.0",
     "packageDirectories": [
         {
             "path": "cmd-loader",
             "default": true,
-            "package": "Spaghetti CMD",
-            "versionName": "ver 1.3",
-            "versionNumber": "1.3.1.NEXT"
+            "package": "Unlocked Package Deployment",
+            "versionName": "ver 1.0",
+            "versionNumber": "1.0.0.NEXT"
         }
-    ],
-    "packageAliases": {
-        "Spaghetti CMD": "0Ho1t000000wk4FCAQ",
-        "Spaghetti CMD@0.5.0-1": "04t1t000002hzNuAAI",
-        "Spaghetti CMD@1.0.0-4": "04t1t000002hzYUAAY",
-        "Spaghetti CMD@1.0.0-5": "04t1t000002hzYjAAI",
-        "Spaghetti CMD@1.0.0-6": "04t1t000002hzYtAAI",
-        "Spaghetti CMD@1.0.0-7": "04t1t000002hzYyAAI",
-        "Spaghetti CMD@1.0.0-8": "04t1t000002hzZDAAY",
-        "Spaghetti CMD@1.0.0-10": "04t1t000002hzZwAAI",
-        "Spaghetti CMD@1.1.0-1": "04t1t000002hza1AAA",
-        "Spaghetti CMD@1.1.1-1": "04t1t000003TtsnAAC",
-        "Spaghetti CMD@1.1.1-5": "04t1t000003Ttt7AAC",
-        "Spaghetti CMD@1.1.1-6": "04t1t000003TttgAAC",
-        "Spaghetti CMD@1.1.1-8": "04t1t000003TtxyAAC",
-        "Spaghetti CMD@1.1.1-10": "04t1t000003Tty8AAC",
-        "Spaghetti CMD@1.2.1-1": "04t1t000003HUFbAAO",
-        "Spaghetti CMD@1.2.1-4": "04t1t000003LfY4AAK",
-        "Spaghetti CMD@1.2.1-5": "04t1t000003LfY9AAK",
-        "Spaghetti CMD@1.3.1-1": "04t1t000003LfYEAA0"
-    }
+    ]
 }
