@@ -27,7 +27,7 @@ public class AdditionTest {
         System.assertEquals(expectedResult, result, 'The addition of negative numbers is incorrect.');
     }
 
-    // Test for zero
+    // Test for zero testing
     @isTest
     static void testAddZero() {
         Integer num1 = 0;
