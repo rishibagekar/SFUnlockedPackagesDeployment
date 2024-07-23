@@ -12,16 +12,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install Node JS
-      uses: actions/setup-node@v3
-      with:
-          node-version: 18
-
-    - name: Install SFDX CLI
+    - name: Install Salesforce CLI
       run: |
-          npm install @salesforce/cli --global
-          echo sf version
-          sf --version
+        wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
+        mkdir sfdx-cli
+        tar xJf sfdx-linux-amd64.tar.xz -C sfdx-cli --strip-components 1
+        ./sfdx-cli/install
     
     - name: Install jq
       run: |
@@ -29,15 +25,19 @@ jobs:
     
     - name: Populate auth file
       shell: bash
-      run: 'echo ${{secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt'
+      run: 'echo ${{secrets.DEVHUB_SFDX_URLS}} > ./DEVHUB_SFDX_URLS.txt'
     
     - name: Authenticate Dev Hub
-      run: 'sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -a devhub -d'
+      run: 'sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URLS.txt -a devhub -d'
 
     - name: Promote latest version
       run: |
         version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
         sfdx force:package:version:promote -p "$version_id" --noprompt
+    
+    - name: Install release version in Dev Hub
+      run: |
+        sfdx force:package:install -p "$version_id" -u devhub --wait 10 --publishwait 10
     
     - name: Tag new release
       run: |
