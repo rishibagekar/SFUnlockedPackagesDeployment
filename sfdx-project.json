@@ -1,15 +1,20 @@
 {
-    "name": "SFUnlockedPackagesDeployment",
-    "namespace": "",
-    "sfdcLoginUrl": "https://login.salesforce.com",
-    "sourceApiVersion": "50.0",
-    "packageDirectories": [
-        {
-            "path": "cmd-loader",
-            "default": true,
-            "package": "Unlocked Package Deployment",
-            "versionName": "ver 1.0",
-            "versionNumber": "1.0.0.NEXT"
-        }
-    ]
+  "name": "SFUnlockedPackagesDeployment",
+  "namespace": "",
+  "sfdcLoginUrl": "https://login.salesforce.com",
+  "sourceApiVersion": "50.0",
+  "packageDirectories": [
+    {
+      "path": "cmd-loader",
+      "package": "Mypackage",
+      "versionName": "ver 0.1",
+      "versionNumber": "0.1.0.NEXT",
+      "default": true,
+      "versionDescription": "My Package"
+    }
+  ],
+  "packageAliases": {
+    "Mypackage": "0HoJ4000000oLl8KAE",
+    "Mypackage@0.1.0-2": "04tJ4000000kZzyIAE"
+  }
 }
