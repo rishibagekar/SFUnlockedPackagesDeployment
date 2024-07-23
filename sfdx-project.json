@@ -14,6 +14,7 @@
     }
   ],
   "packageAliases": {
-    "Mypackage": "0HoJ4000000oLl8KAE"
+    "Mypackage": "0HoJ4000000oLl8KAE",
+    "Mypackage@0.1.0-2": "04tJ4000000kZzyIAE"
   }
 }
