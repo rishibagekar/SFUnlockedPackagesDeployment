@@ -32,7 +32,7 @@ jobs:
 
     - name: Create new version
       run: |
-        sfdx force:package:version:create -x -p "Unlocked Package Deployment" -w 60 --code-coverage
+        sfdx force:package:version:create -x -p "Mypackage" -w 60 --code-coverage
         new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
         echo "version_id=${new_version_id}" >> $GITHUB_ENV
     
