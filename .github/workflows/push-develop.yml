@@ -12,12 +12,16 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install Salesforce CLI
+    - name: Install Node JS
+      uses: actions/setup-node@v3
+      with:
+          node-version: 18
+
+    - name: Install SFDX CLI
       run: |
-        wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
-        mkdir sfdx-cli
-        tar xJf sfdx-linux-amd64.tar.xz -C sfdx-cli --strip-components 1
-        ./sfdx-cli/install
+          npm install @salesforce/cli --global
+          echo sf version
+          sf --version
     
     - name: Populate auth file
       shell: bash
