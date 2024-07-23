@@ -6,15 +6,14 @@ on:
 
 jobs:
   sonarcloud:
-    name: SonarCloud
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
+    - uses: actions/checkout@v3
+      with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -26,12 +25,16 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install Salesforce CLI
+    - name: Install Node JS
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    - name: Install SFDX CLI
       run: |
-        wget https://developer.salesforce.com/media/salesforce-cli/sfdx-linux-amd64.tar.xz
-        mkdir sfdx-cli
-        tar xJf sfdx-linux-amd64.tar.xz -C sfdx-cli --strip-components 1
-        ./sfdx-cli/install
+        npm install @salesforce/cli --global
+        echo sf version
+        sf --version
     
     - name: Install jq
       run: |
