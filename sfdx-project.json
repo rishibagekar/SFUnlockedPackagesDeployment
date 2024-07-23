@@ -3,6 +3,7 @@
     "namespace": "",
     "sfdcLoginUrl": "https://login.salesforce.com",
     "sourceApiVersion": "50.0",
+    
     "packageDirectories": [
         {
             "path": "cmd-loader",
@@ -11,5 +12,8 @@
             "versionName": "ver 1.0",
             "versionNumber": "1.0.0.NEXT"
         }
-    ]
+    ],
+    "packageAliases": {
+    "Unlocked Package Deployment": "0Ho000000000000001"
+  }
 }
