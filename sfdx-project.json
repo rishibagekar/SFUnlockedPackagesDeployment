@@ -6,15 +6,23 @@
   "packageDirectories": [
     {
       "path": "cmd-loader",
-      "package": "CopadoPackage",
+      "package": "CopadoPackage2",
       "versionName": "ver 1.0",
       "versionNumber": "1.0.0.NEXT",
       "default": true,
+      "versionDescription": "Copado Test Package 2"
+    },
+    {
+      "path": "cmd-loader",
+      "package": "CopadoPackage",
+      "versionName": "ver 1.0",
+      "versionNumber": "1.0.0.NEXT",
+      "default": false,
       "versionDescription": "Copado Test Package"
     }
   ],
   "packageAliases": {
-    "CopadoPackage": "0Hoao0000001xHNCAY",
-    "CopadoPackage@1.0.0-2-uat": "04tao000000eTsvAAE"
+    "CopadoPackage2": "0Hoao0000001xIzCAI",
+    "CopadoPackage": "0Hoao0000001xHNCAY"
   }
 }
