@@ -59,7 +59,7 @@ jobs:
 
     - name: Promote latest version
       run: |
-        version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
+        echo version_id
         sfdx force:package:version:promote -v devhub -p "$version_id" --noprompt
     
     - name: Install release version in Dev Hub
