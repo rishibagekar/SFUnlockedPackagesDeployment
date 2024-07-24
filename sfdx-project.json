@@ -9,11 +9,20 @@
       "package": "CopadoPackage",
       "versionName": "ver 1.0",
       "versionNumber": "1.0.0.NEXT",
-      "default": true,
+      "default": false,
       "versionDescription": "Copado Test Package"
+    },
+    {
+      "path": "cmd-loader",
+      "package": "CopadoPackage2",
+      "versionName": "ver 1.0",
+      "versionNumber": "1.0.0.NEXT",
+      "default": true,
+      "versionDescription": "Copado Test Package 2"
     }
   ],
   "packageAliases": {
-    "CopadoPackage": "0Hoao0000001xHNCAY"
+    "CopadoPackage": "0Hoao0000001xHNCAY",
+    "CopadoPackage2": "0Hoao0000001xIzCAI"
   }
 }
