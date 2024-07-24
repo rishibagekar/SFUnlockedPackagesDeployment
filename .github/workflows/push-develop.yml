@@ -23,16 +23,23 @@ jobs:
           echo sf version
           sf --version
     
-    - name: Populate auth file
+    - name: Populate auth file for Dev Hub
+      shell: bash
+      run: 'echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt'
+
+    - name: Authenticate Dev Hub Org
+      run: 'sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub'
+    
+    - name: Populate auth file for Dev Int
       shell: bash
       run: 'echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt'
-    
+
     - name: Authenticate Dev Int Org
       run: 'sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint'
 
     - name: Create new version
       run: |
-        sfdx force:package:version:create -x -p "Mypackage" -w 60 -b develop --code-coverage
+        sfdx force:package:version:create -x -p "CopadoPackage" -w 60 -v devhub -b develop --code-coverage
         new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
         echo "version_id=${new_version_id}" >> $GITHUB_ENV
     
