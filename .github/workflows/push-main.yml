@@ -40,17 +40,27 @@ jobs:
       run: |
         sudo apt-get install jq
     
-    - name: Populate auth file
+    - name: Populate auth file for Dev Hub
       shell: bash
-      run: 'echo ${{secrets.DEVHUB_SFDX_URL}} > ./DEVHUB_SFDX_URL.txt'
+      run: 'echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt'
     
     - name: Authenticate Dev Hub
-      run: 'sfdx force:auth:sfdxurl:store -f ./DEVHUB_SFDX_URL.txt -a devhub -d'
+      run: 'sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub -d'
+
+    - name: Create new version
+      run: |
+        sfdx force:package:version:create -x -p "CopadoPackage" -w 60 -v devhub -b main --code-coverage
+        new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
+        echo "version_id=${new_version_id}" >> $GITHUB_ENV
+    
+    - name: Check code coverage
+      run: |
+        test $(sfdx force:package:version:report -v devhub -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
 
     - name: Promote latest version
       run: |
-        version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
-        sfdx force:package:version:promote -p "$version_id" --noprompt
+        echo version_id
+        sfdx force:package:version:promote -v devhub -p "$version_id" --noprompt
     
     - name: Install release version in Dev Hub
       run: |
