@@ -2,7 +2,7 @@ name: Create pre-release version
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ uat ]
 
 jobs:
   pre_release:
@@ -34,16 +34,16 @@ jobs:
     - name: Authenticate Dev Hub Org
       run: 'sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub'
     
-    - name: Populate auth file for Dev Int
+    - name: Populate auth file for UAT
       shell: bash
-      run: 'echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt'
+      run: 'echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt'
 
-    - name: Authenticate Dev Int Org
-      run: 'sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint'
+    - name: Authenticate UAT Org
+      run: 'sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat'
 
     - name: Create new version
       run: |
-        sfdx force:package:version:create -x -p "CopadoPackage" -w 60 -v devhub -b develop --code-coverage
+        sfdx force:package:version:create -x -p "CopadoPackage" -w 60 -v devhub -b uat --code-coverage
         new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
         echo "version_id=${new_version_id}" >> $GITHUB_ENV
     
@@ -51,9 +51,9 @@ jobs:
       run: |
         test $(sfdx force:package:version:report -v devhub -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
     
-    - name: Install new version in Dev Int
+    - name: Install new version in UAT
       run: |
-        sfdx force:package:install -p "$version_id" -u devint --wait 10 --publishwait 10
+        sfdx force:package:install -p "$version_id" -u uat --wait 10 --publishwait 10
     
     - name: Store new version id
       run: |
