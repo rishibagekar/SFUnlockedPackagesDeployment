@@ -17,6 +17,10 @@ jobs:
       with:
           node-version: 18
 
+    - name: Install jq
+      run: |
+        sudo apt-get install jq
+        
     - name: Install SFDX CLI
       run: |
           npm install @salesforce/cli --global
@@ -45,7 +49,7 @@ jobs:
     
     - name: Check code coverage
       run: |
-        test $(sfdx force:package:version:report -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
+        test $(sfdx force:package:version:report -v devhub -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
     
     - name: Install new version in Dev Int
       run: |
