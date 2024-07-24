@@ -23,6 +23,7 @@
   ],
   "packageAliases": {
     "CopadoPackage": "0Hoao0000001xHNCAY",
-    "CopadoPackage2": "0Hoao0000001xIzCAI"
+    "CopadoPackage2": "0Hoao0000001xIzCAI",
+    "CopadoPackage@1.0.0-4-develop": "04tao000000eUYrAAM"
   }
 }
