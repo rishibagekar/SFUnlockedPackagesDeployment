@@ -6,16 +6,14 @@
   "packageDirectories": [
     {
       "path": "cmd-loader",
-      "package": "Mypackage",
-      "versionName": "ver 0.1",
-      "versionNumber": "0.1.0.NEXT",
+      "package": "CopadoPackage",
+      "versionName": "ver 1.0",
+      "versionNumber": "1.0.0.NEXT",
       "default": true,
-      "versionDescription": "My Package"
+      "versionDescription": "Copado Test Package"
     }
   ],
   "packageAliases": {
-    "Mypackage": "0HoJ4000000oLl8KAE",
-    "Mypackage@0.1.0-2": "04tJ4000000kZzyIAE",
-    "Mypackage@0.1.0-3": "04tJ4000000ka08IAA"
+    "CopadoPackage": "0Hoao0000001xHNCAY"
   }
 }
