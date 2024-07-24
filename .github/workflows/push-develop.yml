@@ -27,8 +27,8 @@ jobs:
       shell: bash
       run: 'echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt'
     
-    - name: Authenticate Dev Hub
-      run: 'sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devhub -d'
+    - name: Authenticate Dev Int Org
+      run: 'sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint'
 
     - name: Create new version
       run: |
@@ -40,9 +40,9 @@ jobs:
       run: |
         test $(sfdx force:package:version:report -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
     
-    - name: Install new version in Dev Hub
+    - name: Install new version in Dev Int
       run: |
-        sfdx force:package:install -p "$version_id" -u devhub --wait 10 --publishwait 10
+        sfdx force:package:install -p "$version_id" -u devint --wait 10 --publishwait 10
     
     - name: Store new version id
       run: |

@@ -1,6 +1,6 @@
 @isTest
 public class AdditionTest {
-    // Test method for addNumbers1
+    // Test method for addNumbers2
     @isTest
     static void testAddNumbers() {
         // Test data
