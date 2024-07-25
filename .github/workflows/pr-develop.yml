@@ -44,7 +44,9 @@ jobs:
       run: |
           sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json || cat code-coverage.json
           status=$?-1
-          exit status
+          if [ $status -ne 0 ]; then
+            exit status
+          fi
 
     - name: Sonar Cloud scan
       env: 
