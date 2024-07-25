@@ -37,21 +37,16 @@ jobs:
       run: 'sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1'
     
     - name: Push source to scratch org / Code Validation
-      run: sfdx force:source:deploy -c -p cmd-loader/main/default -l RunLocalTests -u ci_scratch --verbose
+      run: |
+          sfdx force:source:deploy -c -p cmd-loader/main/default -l RunLocalTests -u ci_scratch --verbose > code-coverage.json
+          cat code-coverage.json
+
+    - name: Sonar Cloud scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     - name: Delete scratch org
       if: always()
       run: 'sfdx force:org:delete -p -u ci_scratch'
-
-  sonar-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0 
-
-      - name: Sonar Cloud scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
