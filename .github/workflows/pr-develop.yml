@@ -45,7 +45,7 @@ jobs:
           status=$?
           cat code-coverage.json
           if [ $status -ne 0 ]; then
-            exit status
+            exit $status
           fi
 
     - name: Sonar Cloud scan
