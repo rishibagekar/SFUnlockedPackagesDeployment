@@ -41,12 +41,7 @@ jobs:
     
     - name: Push source to scratch org / Code Validation
       run: |
-          status = sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json
-          echo $status
-          cat code-coverage.json
-          if [ $status -ne 0 ]; then
-            exit $status
-          fi
+          sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json && cat code-coverage.json
 
     - name: Sonar Cloud scan
       env: 
