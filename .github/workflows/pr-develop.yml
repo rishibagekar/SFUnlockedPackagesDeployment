@@ -41,14 +41,20 @@ jobs:
     
     - name: Push source to scratch org / Code Validation
       run: |
-          sfdx force:source:deploy -c -p cmd-loader/main/default -l RunLocalTests -u ci_scratch --verbose > code-coverage.json
+          sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json
           cat code-coverage.json
 
     - name: Sonar Cloud scan
-      uses: SonarSource/sonarcloud-github-action@master
-      env:
+      env: 
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
+      run: |
+        sonar-scanner
+        -Dsonar.projectKey=rishibagekar_sf-unlocked-pakage-deployment
+        -Dsonar.organization=rishibagekar
+        -Dsonar.sources=cmd-loader
+        -Dsonar.host.url=https://sonarcloud.io
+        -Dsonar.login=${{ secrets.SONAR_TOKEN }}
 
     - name: Delete scratch org
       if: always()
