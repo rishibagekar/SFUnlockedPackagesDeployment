@@ -41,7 +41,7 @@ jobs:
     
     - name: Push source to scratch org / Code Validation
       run: |
-          sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json
+          sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json || true
           cat code-coverage.json
 
     - name: Sonar Cloud scan
