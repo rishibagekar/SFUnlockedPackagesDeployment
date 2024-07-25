@@ -41,10 +41,36 @@ jobs:
     
     - name: Check code coverage
       run: |
-        sfdx force:apex:test:run --codecoverage --resultformat json --synchronous --testlevel RunLocalTests --wait 10 > tests.json
-        coverage=$(jq .result.summary.orgWideCoverage tests.json | grep -Eo "[[:digit:]]+")
+        sfdx force:apex:test:run --codecoverage -o ci_scratch -d ./apex/tests --resultformat json --synchronous --testlevel RunLocalTests --wait 10
+        coverage=$(jq .result.summary.orgWideCoverage test-result-codecoverage.json | grep -Eo "[[:digit:]]+")
         test $coverage -ge 75
+
+    - name: Make report available
+      uses: actions/upload-artifact@v2
+      with:
+          name: apex-code-coverage
+          path: apex/tests/test-result-codecoverage.json
     
     - name: Delete scratch org
       if: always()
       run: 'sfdx force:org:delete -p -u ci_scratch'
+
+  sonar-scan:
+    needs: validate_pull_request
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 
+
+      - name: Download coverage result from previous job
+        uses: actions/download-artifact@v2
+        with:
+          name: apex-code-coverage
+          path: apex/tests
+
+      - name: Sonar Cloud scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
