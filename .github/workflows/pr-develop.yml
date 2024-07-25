@@ -41,7 +41,7 @@ jobs:
     
     - name: Check code coverage
       run: |
-        sfdx force:apex:test:run --codecoverage -o ci_scratch -d ./apex/tests --resultformat json --synchronous --testlevel RunLocalTests --wait 30 > test-result-codecoverage.json
+        sfdx force:apex:test:run --codecoverage -o ci_scratch -d ./apex/tests --resultformat json --detailed-coverage --synchronous --testlevel RunLocalTests --wait 30 > test-result-codecoverage.json
         coverage=$(jq .result.summary.orgWideCoverage test-result-codecoverage.json | grep -Eo "[[:digit:]]+")
         test $coverage -ge 75
         echo "Code Coverage check successfull"
@@ -57,7 +57,6 @@ jobs:
       run: 'sfdx force:org:delete -p -u ci_scratch'
 
   sonar-scan:
-    needs: validate_pull_request
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
