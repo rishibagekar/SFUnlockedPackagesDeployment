@@ -41,9 +41,10 @@ jobs:
     
     - name: Check code coverage
       run: |
-        sfdx force:apex:test:run --codecoverage -o ci_scratch -d ./apex/tests --resultformat json --synchronous --testlevel RunLocalTests --wait 10
+        sfdx force:apex:test:run --codecoverage -o ci_scratch -d ./apex/tests --resultformat json --synchronous --testlevel RunLocalTests --wait 30
         coverage=$(jq .result.summary.orgWideCoverage test-result-codecoverage.json | grep -Eo "[[:digit:]]+")
         test $coverage -ge 75
+        echo "Code Coverage check successfull"
 
     - name: Make report available
       uses: actions/upload-artifact@v2
