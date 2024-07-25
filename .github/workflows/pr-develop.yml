@@ -42,6 +42,7 @@ jobs:
     - name: Push source to scratch org / Code Validation
       run: |
           sfdx force:source:deploy -c -p cmd-loader/main/default -l RunLocalTests -u ci_scratch --verbose > code-coverage.json
+          cat code-coverage.json
 
     - name: Sonar Cloud scan
       uses: SonarSource/sonarcloud-github-action@master
