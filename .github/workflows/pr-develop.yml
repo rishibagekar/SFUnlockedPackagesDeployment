@@ -43,6 +43,7 @@ jobs:
       run: |
           sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json || true
           status=$?
+          echo $status
           cat code-coverage.json
           if [ $status -ne 0 ]; then
             exit $status
