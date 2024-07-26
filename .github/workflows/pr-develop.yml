@@ -39,7 +39,7 @@ jobs:
       run: sfdx force:source:push
 
     - name: "Run Apex tests"
-      run: sf project deploy start --dry-run -d cmd-loader/main/default -l RunAllTestsInOrg -o ci_scratch --results-dir ./tests/apex --coverage-formatters=json --verbose
+      run: sf project deploy start --dry-run -d cmd-loader/main/default -l RunAllTestsInOrg -o ci_scratch --results-dir ./tests/apex/coverage --coverage-formatters=json --verbose
 
     - name: "Generating Apex Code Coverage Report"
       uses: actions/upload-artifact@v2
