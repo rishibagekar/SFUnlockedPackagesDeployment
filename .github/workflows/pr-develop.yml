@@ -39,17 +39,20 @@ jobs:
     - name: Create scratch org
       run: 'sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1'
 
-    - name: Check code coverage
+    - name: Check Validation
       run: |
           sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose
-          sf apex run test --test-level RunLocalTests --code-coverage --detailed-coverage --synchronous --wait 10
+
+    - name: Check Code Coverage
+      run: |
+          sf apex run test --test-level RunLocalTests --code-coverage --detailed-coverage --synchronous --wait 10 > code-coverage.json
           coverage=$(jq .result.summary.orgWideCoverage code-coverage.json | grep -Eo "[[:digit:]]+")
           test $coverage -ge 75
           echo "Apex Code Coverage Check Successful"
 
     - name: Sonar Cloud scan
       env: 
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} #Needed to get PR information, if any
         SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
       run: |
         sonar-scanner
