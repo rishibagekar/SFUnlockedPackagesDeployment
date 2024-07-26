@@ -42,13 +42,13 @@ jobs:
 
     - name: Create scratch org
       run: 'sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1'
-    
-    - name: Push source to scratch org / Code Validation
-      run: sfdx force:source:push
 
     - name: Check code coverage
       run: |
-        sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose
+          sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose
+          sfdx force:apex:test:run --codecoverage --resultformat json --synchronous --testlevel RunLocalTests --wait 10 > tests.json
+          coverage=$(jq .result.summary.orgWideCoverage tests.json | grep -Eo "[[:digit:]]+")
+          test $coverage -ge 75
 
     - name: Sonar Cloud scan
       env: 
