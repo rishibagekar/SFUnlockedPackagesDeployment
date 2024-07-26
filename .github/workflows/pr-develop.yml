@@ -51,6 +51,10 @@ jobs:
         name: apex-code-coverage
         path: tests/apex/test-result-codecoverage.json
 
+    - name: Delete scratch org
+      if: always()
+      run: 'sfdx force:org:delete -p -u ci_scratch'
+
   sonar-scan:
     needs: validate_pull_request
     runs-on: ubuntu-latest
@@ -70,7 +74,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          
-      - name: Delete scratch org
-        if: always()
-        run: 'sfdx force:org:delete -p -u ci_scratch'
