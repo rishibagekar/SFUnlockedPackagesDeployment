@@ -41,11 +41,11 @@ jobs:
 
     - name: Check Validation
       run: |
-          sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch
+          sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose
 
     - name: Check Code Coverage
       run: |
-          sfdx force:apex:test:run -l RunLocalTests -c -y -r json -u ci_scratch --verbose
+          sfdx force:apex:test:run -l RunLocalTests -c -y -r json -u ci_scratch
           coverage=$(jq .result.summary.orgWideCoverage code-coverage.json | grep -Eo "[[:digit:]]+")
           test $coverage -ge 75
           echo "Apex Code Coverage Check Successful"
