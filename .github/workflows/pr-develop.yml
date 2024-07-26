@@ -41,12 +41,11 @@ jobs:
     
     - name: Push source to scratch org / Code Validation
       shell: bash
-      run: |
-          if [ sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json ]; then
-            cat code-coverage.json
-          else
-            cat code-coverage.json
-          fi
+      run: sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json
+      continue-on-error: true
+    
+    - name: Publish result
+      run: cat code-coverage.json
 
     - name: Sonar Cloud scan
       env: 
