@@ -16,20 +16,16 @@ jobs:
       with:
           node-version: 18
 
-    - name: Install SonarQube Scanner
-      run: npm install -g sonarqube-scanner
-
     - name: Install SFDX CLI
       run: |
-          npm install @salesforce/cli --global
-          echo sf version
-          sf --version
+        npm install @salesforce/cli --global
+        sf --version
 
     - name: Install jq
       run: |
         sudo apt-get install jq
     
-    - name: Populate auth file
+    - name: Populate Dev Hub auth file 
       shell: bash
       run: 'echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt'
     
@@ -43,7 +39,7 @@ jobs:
       run: sfdx force:source:push
 
     - name: "Run Apex tests"
-      run: "sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120"
+      run: "sfdx force:apex:test:run -c -r human -l RunLocalTests -d ./tests/apex -u ci_scratch -w 120"
 
     - name: "Make Apex Code Coverage Report available"
       uses: actions/upload-artifact@v2
@@ -59,7 +55,7 @@ jobs:
     needs: validate_pull_request
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
