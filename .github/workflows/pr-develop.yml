@@ -29,10 +29,6 @@ jobs:
       run: |
         sudo apt-get install jq
     
-    - name: Install yq
-      run: |
-        sudo snap install yq
-    
     - name: Populate auth file
       shell: bash
       run: 'echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt'
@@ -46,7 +42,7 @@ jobs:
     - name: Check code coverage
       run: |
           sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose
-          sf apex run test --test-level RunLocalTests --output-dir code-coverage.json --synchronous --wait 10 --target-org ci_scratch
+          sf apex run test --test-level RunLocalTests --output-dir code-coverage.json --synchronous --wait 10
           coverage=$(jq .result.summary.orgWideCoverage code-coverage.json | grep -Eo "[[:digit:]]+")
           test $coverage -ge 75
           echo "Apex Code Coverage Check Successful"
