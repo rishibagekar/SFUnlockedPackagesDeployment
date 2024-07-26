@@ -25,6 +25,10 @@ jobs:
           echo sf version
           sf --version
     
+    - name: Install yq
+      run: |
+        sudo apt-get install yq
+
     - name: Install jq
       run: |
         sudo apt-get install jq
@@ -46,6 +50,7 @@ jobs:
       run: |
         sfdx force:apex:test:run --codecoverage --resultformat human --synchronous --testlevel RunLocalTests --wait 10 > tests.json
         cat tests.json
+        yq -p json -o yaml tests.json
         coverage=$(jq .result.summary.orgWideCoverage tests.json | grep -Eo "[[:digit:]]+")
         test $coverage -ge 75
 
