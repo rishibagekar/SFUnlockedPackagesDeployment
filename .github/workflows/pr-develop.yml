@@ -39,13 +39,13 @@ jobs:
       run: sfdx force:source:push
 
     - name: "Run Apex tests"
-      run: sf project deploy start --dry-run -d cmd-loader/main/default -l RunAllTestsInOrg -o ci_scratch --results-dir ./tests/apex/coverage --coverage-formatters=json --verbose
+      run: sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120
 
     - name: "Generating Apex Code Coverage Report"
       uses: actions/upload-artifact@v2
       with:
         name: apex-code-coverage
-        path: tests/apex/coverage/coverage/coverage.json
+        path: tests/apex/test-result-codecoverage.json
 
     - name: Delete scratch org
       if: always()
@@ -63,7 +63,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: apex-code-coverage
-          path: tests/apex/coverage
+          path: tests/apex
 
       - name: "Sonar Cloud scan"
         uses: SonarSource/sonarcloud-github-action@master
