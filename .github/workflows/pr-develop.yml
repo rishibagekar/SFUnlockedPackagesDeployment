@@ -39,6 +39,38 @@ jobs:
     - name: Create scratch org
       run: 'sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1'
 
-    - name: Delete scratch org
-      if: always()
-      run: 'sfdx force:org:delete -p -u ci_scratch'
+    - name: Push source to Scratch Org
+      run: sfdx force:source:push
+
+    - name: "Run Apex tests"
+      run: "sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120"
+
+    - name: "Make Apex Code Coverage Report available"
+      uses: actions/upload-artifact@v2
+      with:
+        name: apex-code-coverage
+        path: tests/apex/test-result-codecoverage.json
+
+  sonar-scan:
+    needs: validate_pull_request
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: "Download coverage result from previous job"
+        uses: actions/download-artifact@v2
+        with:
+          name: apex-code-coverage
+          path: tests/apex
+
+      - name: "Sonar Cloud scan"
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          
+      - name: Delete scratch org
+        if: always()
+        run: 'sfdx force:org:delete -p -u ci_scratch'
