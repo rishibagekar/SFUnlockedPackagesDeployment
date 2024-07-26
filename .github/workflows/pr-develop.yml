@@ -31,7 +31,7 @@ jobs:
     
     - name: Install yq
       run: |
-        sudo apt install yq
+        sudo snap install yq
     
     - name: Populate auth file
       shell: bash
