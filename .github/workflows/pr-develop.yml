@@ -45,7 +45,7 @@ jobs:
 
     - name: Check Code Coverage
       run: |
-          sfdx force:apex:test:run --codecoverage --resultformat json --synchronous --testlevel RunLocalTests > code-coverage.json
+          sfdx force:apex:test:run --testlevel RunLocalTests --codecoverage --resultformat json --detailedcoverage --wait 10
           coverage=$(jq .result.summary.orgWideCoverage code-coverage.json | grep -Eo "[[:digit:]]+")
           test $coverage -ge 75
           echo "Apex Code Coverage Check Successful"
