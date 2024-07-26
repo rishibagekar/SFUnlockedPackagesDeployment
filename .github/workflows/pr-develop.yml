@@ -50,8 +50,8 @@ jobs:
       run: |
         sfdx force:apex:test:run --codecoverage --resultformat json --synchronous --testlevel RunLocalTests --wait 10 > tests.json
         coverage=$(jq .result.summary.orgWideCoverage tests.json | grep -Eo "[[:digit:]]+")
-        yq eval -o=txt tests.json > tests.txt
-        cat tests.txt
+        yq eval -o=ysv tests.json > tests.tsv
+        cat tests.tsv
         test $coverage -ge 75
 
     - name: Sonar Cloud scan
