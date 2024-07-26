@@ -21,7 +21,7 @@ jobs:
 
     - name: Install SFDX CLI
       run: |
-          npm install salesforce-cli@2.38.7 --global
+          npm install -g @salesforce/cli@2.38.7
           echo sf version
           sf --version
 
