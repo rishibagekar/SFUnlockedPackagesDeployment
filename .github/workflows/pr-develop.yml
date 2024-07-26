@@ -40,24 +40,15 @@ jobs:
       run: 'sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1'
     
     - name: Push source to scratch org / Code Validation
-      shell: bash
-      id: step1
+      run: sfdx force:source:push
+
+    - name: Check code coverage
       run: |
-        sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json || status: $?
-      continue-on-error: true
-
-    - name: Publish result
-      run: cat code-coverage.json
-
-    - name: Check Status
-      id: check_stats
-      run: |
-        if ["${{ steps.step1.outputs.status }}" -ne 0 ]; then
-          exit 1
-        else
-          exit 0
-        fi
-
+        sfdx force:apex:test:run --codecoverage --resultformat json --synchronous --testlevel RunLocalTests --wait 10 > tests.json
+        cat tests.json
+        coverage=$(jq .result.summary.orgWideCoverage tests.json | grep -Eo "[[:digit:]]+")
+        test $coverage -ge 75
+        
     - name: Sonar Cloud scan
       env: 
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
