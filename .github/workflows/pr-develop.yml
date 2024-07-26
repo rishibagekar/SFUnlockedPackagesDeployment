@@ -48,11 +48,10 @@ jobs:
 
     - name: Check code coverage
       run: |
-        sfdx force:apex:test:run --codecoverage --resultformat human --synchronous --testlevel RunLocalTests --wait 10 > tests.yaml
-        cat tests.yaml
-        yq eval -o=json tests.yaml > tests.json
-        cat tests.json
+        sfdx force:apex:test:run --codecoverage --resultformat json --synchronous --testlevel RunLocalTests --wait 10 > tests.json
         coverage=$(jq .result.summary.orgWideCoverage tests.json | grep -Eo "[[:digit:]]+")
+        yq eval -o=txt tests.json > tests.txt
+        cat tests.txt
         test $coverage -ge 75
 
     - name: Sonar Cloud scan
