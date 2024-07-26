@@ -50,7 +50,7 @@ jobs:
       run: |
         sfdx force:apex:test:run --codecoverage --resultformat human --synchronous --testlevel RunLocalTests --wait 10 > tests.yaml
         cat tests.yaml
-        yq -p yaml -o json tests.yaml
+        yq eval -o=json tests.yaml > tests.json
         cat tests.json
         coverage=$(jq .result.summary.orgWideCoverage tests.json | grep -Eo "[[:digit:]]+")
         test $coverage -ge 75
