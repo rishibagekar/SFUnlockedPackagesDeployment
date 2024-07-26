@@ -35,13 +35,13 @@ jobs:
     - name: Create scratch org
       run: 'sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1'
 
-    - name: Push source to Scratch Org
+    - name: Push Source to Scratch Org
       run: sfdx force:source:push
 
     - name: "Run Apex tests"
       run: "sfdx force:apex:test:run -c -r human -l RunLocalTests -d ./tests/apex -u ci_scratch -w 120"
 
-    - name: "Make Apex Code Coverage Report available"
+    - name: "Generating Apex Code Coverage Report"
       uses: actions/upload-artifact@v2
       with:
         name: apex-code-coverage
