@@ -85,3 +85,5 @@ If you are interested in contributing, please take a look at the [CONTRIBUTING](
 
 # Credits <a id="credits"></a>
 - [Papa Parse](https://www.papaparse.com/) for its amazing Javascript CSV parser
+
+[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=rishibagekar_sf-unlocked-pakage-deployment)](https://sonarcloud.io/summary/new_code?id=rishibagekar_sf-unlocked-pakage-deployment)
