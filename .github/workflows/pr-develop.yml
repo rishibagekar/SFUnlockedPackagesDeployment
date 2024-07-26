@@ -24,14 +24,14 @@ jobs:
           npm install @salesforce/cli --global
           echo sf version
           sf --version
-    
-    - name: Install yq
-      run: |
-        sudo apt-get install yq
 
     - name: Install jq
       run: |
         sudo apt-get install jq
+    
+    - name: Install yq
+      run: |
+        sudo apt install yq
     
     - name: Populate auth file
       shell: bash
