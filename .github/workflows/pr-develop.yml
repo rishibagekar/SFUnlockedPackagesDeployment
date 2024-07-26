@@ -41,7 +41,7 @@ jobs:
 
     - name: Check Validation
       run: |
-          sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose
+          sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch
 
     - name: Check Code Coverage
       run: |
