@@ -43,8 +43,7 @@ jobs:
       shell: bash
       id: step1
       run: |
-        sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json
-        echo "::set-output check_status=status::$?"
+        sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose > code-coverage.json || status: $?
       continue-on-error: true
 
     - name: Publish result
@@ -53,7 +52,7 @@ jobs:
     - name: Check Status
       id: check_stats
       run: |
-        if ["${{ steps.step1.outputs.check_status }}" -ne 0 ]; then
+        if ["${{ steps.step1.outputs.status }}" -ne 0 ]; then
           exit 1
         else
           exit 0
