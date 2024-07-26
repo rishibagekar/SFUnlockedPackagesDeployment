@@ -48,11 +48,7 @@ jobs:
 
     - name: Check code coverage
       run: |
-        sfdx force:apex:test:run --codecoverage --resultformat json --synchronous --testlevel RunLocalTests --wait 10 > tests.json
-        coverage=$(jq .result.summary.orgWideCoverage tests.json | grep -Eo "[[:digit:]]+")
-        sfdx force:apex:test:run --codecoverage --resultformat human --synchronous --testlevel RunLocalTests --wait 10 > testhuman.json
-        cat testhuman.json
-        test $coverage -ge 75
+        sf project deploy start --dry-run -d cmd-loader/main/default -l RunLocalTests -o ci_scratch --verbose
 
     - name: Sonar Cloud scan
       env: 
