@@ -39,16 +39,17 @@ jobs:
       run: sfdx force:source:push
 
     - name: "Run Apex Tests"
-      id: coverage_output
+      id: coverage
       run: |
         sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120 > testcoverage.json
-        coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+") >> $GITHUB_OUTPUT
+        coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
+        echo "::set-output name=test::$coverage"
         echo $coverage
 
     - name: Check Code Coverage
       run: |
         sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
-        codecoverage: ${{ steps.coverage_output.outputs.coverage}}
+        codecoverage: ${{ steps.coverage.outputs.test}}
         test $codecoverage -ge 75
         echo "Code Coverage Check Successfull"
 
