@@ -41,10 +41,8 @@ jobs:
     - name: "Run Apex Tests"
       id: coverage_output
       run: |
-        sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120
-        cat tests/apex/test-result-codecoverage.json
-        coverage=$(jq '.[].coveredPercent' tests/apex/test-result-codecoverage.json)
-        echo $coverage
+        sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120 > testcoverage.json
+        coverage=$(jq .result.summary.orgWideCoverage tests.json | grep -Eo "[[:digit:]]+")
 
     - name: Check Code Coverage
       run: |
