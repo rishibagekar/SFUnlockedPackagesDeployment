@@ -42,7 +42,7 @@ jobs:
       run: |
         sfdx force:apex:test:run -c -r json -u ci_scratch -w 120 > test-result-codecoverage.json
         coverage=$(jq .result.summary.orgWideCoverage test-result-codecoverage.json | grep -Eo "[[:digit:]]+")
-        sfdx force:apex:test:run -c -r human -u ci_scratch -w 120 --verbose
+        sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
         test $coverage -ge 75
 
     - name: "Generating Apex Code Coverage Report"
