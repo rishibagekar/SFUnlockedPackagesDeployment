@@ -39,7 +39,11 @@ jobs:
       run: sfdx force:source:push
 
     - name: "Run Apex tests"
-      run: sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120
+      run: |
+        sfdx force:apex:test:run -c -r json -u ci_scratch -w 120 > test-result-codecoverage.json
+        coverage=$(jq .result.summary.orgWideCoverage tests.json | grep -Eo "[[:digit:]]+")
+        sfdx force:apex:test:run -c -r human -u ci_scratch -w 120 --verbose
+        test $coverage -ge 75
 
     - name: "Generating Apex Code Coverage Report"
       uses: actions/upload-artifact@v2
