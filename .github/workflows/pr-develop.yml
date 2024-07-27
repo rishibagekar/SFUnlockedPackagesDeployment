@@ -47,8 +47,9 @@ jobs:
     - name: Check Code Coverage
       run: |
         sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
-        coverage=${{ env.coverage }}
-        codecoverage=$((coverage))
+        coverages="${{ env.coverage }}"
+        echo $coverages
+        codecoverage=$((coverages))
         echo $codecoverage
         test $codecoverage -ge 75
 
