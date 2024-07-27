@@ -41,7 +41,7 @@ jobs:
     - name: "Run Apex Tests"
       run: |
         sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120 > testcoverage.json
-        coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+") >>GITHUB_ENV
+        coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+") >> $GITHUB_ENV
         echo $coverage
 
     - name: Check Code Coverage
