@@ -48,7 +48,7 @@ jobs:
     - name: Check Code Coverage
       run: |
         sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
-        codecoverage = ${{ steps.coverage_output.outputs.coverage}}
+        codecoverage: ${{ steps.coverage_output.outputs.coverage}}
         test $codecoverage -ge 75
         echo "Code Coverage Check Successfull"
 
