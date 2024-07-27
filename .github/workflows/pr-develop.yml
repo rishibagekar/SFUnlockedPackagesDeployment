@@ -42,7 +42,7 @@ jobs:
       id: coverage_output
       run: |
         sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120
-        coverage=$(jq .coveredPercent tests/apex/test-result-codecoverage.json | grep -Eo "[[:digit:]]+")
+        coverage=$(jq '.[].coveredPercent' tests/apex/test-result-codecoverage.json | grep -Eo "[[:digit:]]+")
 
     - name: Check Code Coverage
       run: |
