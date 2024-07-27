@@ -38,18 +38,25 @@ jobs:
     - name: Push Source to Scratch Org
       run: sfdx force:source:push
 
-    - name: "Run Apex tests"
+    - name: "Run Apex Tests"
+      id: coverage_output
       run: |
-        sfdx force:apex:test:run -c -r json -u ci_scratch -w 120 > test-result-codecoverage.json
+        sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120
         coverage=$(jq .result.summary.orgWideCoverage test-result-codecoverage.json | grep -Eo "[[:digit:]]+")
+
+
+    - name: Check Code Coverage
+      run: |
         sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
-        test $coverage -ge 75
+        codecoverage = ${{ steps.coverage_output.outputs.coverage}}
+        test $codecoverage -ge 75
+        echo "Code Coverage Check Successfull"
 
     - name: "Generating Apex Code Coverage Report"
       uses: actions/upload-artifact@v2
       with:
         name: apex-code-coverage
-        path: test-result-codecoverage.json
+        path: tests/apex/test-result-codecoverage.json
 
     - name: Delete scratch org
       if: always()
@@ -67,7 +74,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: apex-code-coverage
-          path: test-result-codecoverage.json
+          path: tests/apex
 
       - name: "Sonar Cloud scan"
         uses: SonarSource/sonarcloud-github-action@master
