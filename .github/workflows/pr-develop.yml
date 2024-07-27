@@ -42,15 +42,23 @@ jobs:
       id: code_coverage
       run: |
         sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120 > testcoverage.json
-        coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
-        echo "$coverage" >> $GITHUB_OUTPUT
+        coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+") >> $GITHUB_OUTPUT
 
     - name: Check Code Coverage
       run: |
         sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
-        code_coverage=${{ steps.code_coverage.outputs.coverage }}
-        echo $code_coverage
-        codeco=$((code_coverage))
+        code_coverages=${{ steps.code_coverage.outputs.coverage }}
+        echo $code_coverages
+
+        if [[ "$codecoverages" =~ ^[0-9]+$ ]]; then
+          echo "The variable is an integer."
+        elif [[ "$codecoverages" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+          echo "The variable is a floating point number."
+        else
+          echo "The variable is a string."
+        fi
+    
+        codeco=$((code_coverages))
         echo $codeco
         test $codeco -ge 75
 
