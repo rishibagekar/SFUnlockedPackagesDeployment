@@ -39,27 +39,16 @@ jobs:
       run: sfdx force:source:push
 
     - name: "Run Apex Tests"
-      id: coverage
       run: |
         sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120 > testcoverage.json
-        coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
-        echo "::set-output name=test::$coverage"
+        coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+") >>GITHUB_ENV
         echo $coverage
 
     - name: Check Code Coverage
       run: |
         sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
-        codecoverage= ${{ steps.coverage.outputs.test }}
-    
-        if [[ "$codecoverage" =~ ^[0-9]+$ ]]; then
-          echo "The variable is an integer."
-        elif [[ "$codecoverage" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
-          echo "The variable is a floating point number."
-        else
-          echo "The variable is a string."
-        fi
-        
-        test [[ "$codecoverage" -ge 75 ]]
+        coverage=${{env.coverage}}
+        test $coverage -ge 75
 
     - name: "Generating Apex Code Coverage Report"
       uses: actions/upload-artifact@v2
