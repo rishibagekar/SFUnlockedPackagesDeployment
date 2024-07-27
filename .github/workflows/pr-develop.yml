@@ -50,11 +50,7 @@ jobs:
       run: |
         sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
         echo "codecoverage= ${{ steps.coverage.outputs.test }}"
-        if [ "$codecoverage" -ge 75 ]; then
-          echo "Coverage successfull"
-        else 
-          echo "Coverage failed"
-        fi
+        test $codecoverage -ge 75
 
     - name: "Generating Apex Code Coverage Report"
       uses: actions/upload-artifact@v2
