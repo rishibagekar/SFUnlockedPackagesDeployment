@@ -50,6 +50,15 @@ jobs:
       run: |
         sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
         echo "codecoverage= ${{ steps.coverage.outputs.test }}"
+    
+        if [[ "$codecoverage" =~ ^[0-9]+$ ]]; then
+          echo "The variable is an integer."
+        elif [[ "$codecoverage" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+          echo "The variable is a floating point number."
+        else
+          echo "The variable is a string."
+        fi
+        
         test [[ "$codecoverage" -ge 75 ]]
 
     - name: "Generating Apex Code Coverage Report"
