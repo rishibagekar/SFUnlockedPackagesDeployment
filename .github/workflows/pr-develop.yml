@@ -49,7 +49,7 @@ jobs:
     - name: Check Code Coverage
       run: |
         sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
-        echo "codecoverage= ${{ steps.coverage.outputs.test }}"
+        codecoverage= ${{ steps.coverage.outputs.test }}
     
         if [[ "$codecoverage" =~ ^[0-9]+$ ]]; then
           echo "The variable is an integer."
