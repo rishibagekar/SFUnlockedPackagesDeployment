@@ -49,7 +49,7 @@ jobs:
       run: |
         sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
         coverage=${{ env.coverage}}
-        echo "Code Coverage: $coverage"
+        echo "Org Wide Code Coverage: $coverage"
         test $coverage -ge 75
       
     - name: "Generating Apex Code Coverage Report"
