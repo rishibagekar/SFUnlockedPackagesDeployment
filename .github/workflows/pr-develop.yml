@@ -1,14 +1,18 @@
-name: SonarCloud Analysis
+name: SonarCloud
 
 on:
   pull_request:
     branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
       - develop
 
 jobs:
   sonarcloud:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -19,31 +23,42 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Verify Java Version
-        run: java -version
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+
+      - name: Cache SonarCloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v2
+        with:
+          path: ${{ runner.tool_cache }}/sonar-scanner
+          key: ${{ runner.os }}-sonar-scanner
+
+      - name: Install SonarCloud scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        run: |
+          wget -O sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.6.2.2472-linux.zip
+          unzip sonar-scanner.zip -d $RUNNER_TOOL_CACHE/sonar-scanner
+          echo "$RUNNER_TOOL_CACHE/sonar-scanner/sonar-scanner-4.6.2.2472-linux/bin" >> $GITHUB_PATH
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.projectKey=rishibagekar_sf-unlocked-pakage-deployment
-            -Dsonar.organization=rishibagekar
-            -Dsonar.sources=cmd-loader/main/default
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-            -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=rishibagekar_sf-unlocked-pakage-deployment \
+            -Dsonar.organization=rishibagekar \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+      - name: Check SonarCloud Quality Gate
+        if: always()
+        run: |
+          curl -sSLo sonar-quality-gate https://community.sonarsource.com/resources/gate/sonar-quality-gate.sh
+          chmod +x sonar-quality-gate
+          ./sonar-quality-gate
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Post analysis results to GitHub
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          curl -X POST \
-          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
-          -d '{ "body": "**SonarCloud Analysis Results**: \nSee the detailed analysis on [SonarCloud](https://sonarcloud.io/dashboard?id=your_project_key)." }'
-          
