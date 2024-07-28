@@ -27,6 +27,9 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar
 
       - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        
+      - name: Run Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
