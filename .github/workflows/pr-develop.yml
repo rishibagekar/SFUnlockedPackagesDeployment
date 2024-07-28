@@ -9,7 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Code Checkout
+      uses: actions/checkout@v3
 
     - name: Install Node JS
       uses: actions/setup-node@v3
@@ -35,26 +36,24 @@ jobs:
     - name: Create scratch org
       run: 'sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1'
 
-    - name: Push Source to Scratch Org
+    - name: Push Code to Scratch Org
       run: sfdx force:source:push
 
-    - name: "Run Apex Tests"
-      id: code_coverage
+    - name: Run Apex Tests
+      run: sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 20
+
+    - name: Check Apex Code Coverage
       run: |
-        sfdx force:apex:test:run -c -r human -u ci_scratch -w 120
-    
-    - name: "Generating Apex Code Coverage Report"
+        sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 20 > testcoverage.json
+        coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
+        echo "Org Wide Code Coverage: $coverage"
+        test $coverage -ge 75
+
+    - name: Generating Apex Code Coverage Report
       uses: actions/upload-artifact@v2
       with:
         name: apex-code-coverage
         path: tests/apex/test-result-codecoverage.json
-
-    - name: Check Code Coverage
-      run: |
-        sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
-        coverage=${{ env.coverage}}
-        echo "Org Wide Code Coverage: $coverage"
-        test $coverage -ge 75
 
     - name: Delete scratch org
       if: always()
@@ -64,11 +63,12 @@ jobs:
     needs: validate_pull_request
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Code Checkout
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: "Download coverage result from previous job"
+      - name: Download Apex Code coverage Report
         uses: actions/download-artifact@v2
         with:
           name: apex-code-coverage
@@ -77,5 +77,5 @@ jobs:
       - name: "Sonar Cloud scan"
         uses: SonarSource/sonarcloud-github-action@master
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
