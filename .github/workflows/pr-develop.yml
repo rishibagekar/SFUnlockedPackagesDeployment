@@ -28,10 +28,11 @@ jobs:
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
-        
-      - name: Run Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+      - name: Run Scan
         run: |
           sonar-scanner \
             -Dsonar.projectKey=rishibagekar_sf-unlocked-pakage-deployment \
