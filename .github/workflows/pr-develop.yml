@@ -34,4 +34,13 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Post analysis results to GitHub
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          curl -X POST \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
+          -d '{ "body": "**SonarCloud Analysis Results**: \nSee the detailed analysis on [SonarCloud](https://sonarcloud.io/dashboard?id=your_project_key)." }'
           
