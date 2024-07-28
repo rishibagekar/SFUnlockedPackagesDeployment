@@ -45,18 +45,18 @@ jobs:
         coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
         echo "coverage=$coverage" >> $GITHUB_ENV
 
+    - name: "Generating Apex Code Coverage Report"
+      uses: actions/upload-artifact@v2
+      with:
+        name: apex-code-coverage
+        path: tests/apex/test-result-codecoverage.json
+
     - name: Check Code Coverage
       run: |
         sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 120
         coverage=${{ env.coverage}}
         echo "Org Wide Code Coverage: $coverage"
         test $coverage -ge 75
-      
-    - name: "Generating Apex Code Coverage Report"
-      uses: actions/upload-artifact@v2
-      with:
-        name: apex-code-coverage
-        path: tests/apex/test-result-codecoverage.json
 
     - name: Delete scratch org
       if: always()
