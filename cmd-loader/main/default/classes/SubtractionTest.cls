@@ -6,7 +6,7 @@ public class SubtractionTest {
         // Test data
         Integer num1 = 5;
         Integer num2 = 10;
-        Integer expectedResult = 15;
+        Integer expectedResult = -5;
 
         // Call the method and store the result
         Integer result = Subtraction.subNumbers(num1, num2);
@@ -20,7 +20,7 @@ public class SubtractionTest {
     static void testAddNegativeNumbers() {
         Integer num1 = -5;
         Integer num2 = -10;
-        Integer expectedResult = -15;
+        Integer expectedResult = 5;
 
         Integer result = Subtraction.subNumbers(num1, num2);
 
