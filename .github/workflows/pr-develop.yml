@@ -1,81 +1,36 @@
-name: Pull Request to Develop
+name: SonarCloud Analysis
 
 on:
   pull_request:
-    branches: [ develop ]
+    branches:
+      - develop
 
 jobs:
-  validate_pull_request:
+  sonarcloud:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Code Checkout
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Install Node JS
-      uses: actions/setup-node@v3
-      with:
-          node-version: 18
-
-    - name: Install SFDX CLI
-      run: |
-        npm install @salesforce/cli --global
-        sf --version
-
-    - name: Install jq
-      run: |
-        sudo apt-get install jq
-    
-    - name: Populate Dev Hub auth file 
-      shell: bash
-      run: 'echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt'
-    
-    - name: Authenticate Dev Hub
-      run: 'sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub -d'
-
-    - name: Create scratch org
-      run: 'sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1'
-
-    - name: Push Code to Scratch Org
-      run: sfdx force:source:push
-
-    - name: Run Apex Tests
-      run: sfdx force:apex:test:run -c -v -r human -u ci_scratch -w 20
-
-    - name: Check Apex Code Coverage
-      run: |
-        sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 20 > testcoverage.json
-        coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
-        echo "Org Wide Code Coverage: $coverage"
-        test $coverage -ge 75
-
-    - name: Generating Apex Code Coverage Report
-      uses: actions/upload-artifact@v2
-      with:
-        name: apex-code-coverage
-        path: tests/apex/test-result-codecoverage.json
-
-    - name: Delete scratch org
-      if: always()
-      run: 'sfdx force:org:delete -p -u ci_scratch'
-
-  sonar-scan:
-    needs: validate_pull_request
-    runs-on: ubuntu-latest
-    steps:
-      - name: Code Checkout
-        uses: actions/checkout@v3
+      - name: Set up Java
+        uses: actions/setup-java@v2
         with:
-          fetch-depth: 0
+          java-version: '11'
 
-      - name: Download Apex Code coverage Report
-        uses: actions/download-artifact@v2
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v2
         with:
-          name: apex-code-coverage
-          path: tests/apex
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar-${{ hashFiles('**/sonar-project.properties') }}
+          restore-keys: ${{ runner.os }}-sonar
 
-      - name: "Sonar Cloud scan"
-        uses: SonarSource/sonarcloud-github-action@master
+      - name: SonarCloud Scan
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          sonar-scanner 
+            -Dsonar.projectKey=rishibagekar_sf-unlocked-pakage-deployment
+            -Dsonar.organization=rishibagekar
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.login=$SONAR_TOKEN
