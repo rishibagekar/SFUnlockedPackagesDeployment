@@ -1,50 +1,68 @@
-name: Pull Request to Develop
+name: SonarCloud Analysis
 
 on:
   pull_request:
-    branches: [ develop ]
+    branches:
+      - develop
 
 jobs:
-  validate_pull_request:
+  sonarcloud:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Install Node JS
-      uses: actions/setup-node@v3
-      with:
-          node-version: 18
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    - name: Install SFDX CLI
-      run: |
-          npm install @salesforce/cli --global
-          echo sf version
-          sf --version
-    
-    - name: Install jq
-      run: |
-        sudo apt-get install jq
-    
-    - name: Populate auth file
-      shell: bash
-      run: 'echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt'
-    
-    - name: Authenticate Dev Hub
-      run: 'sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub -d'
+      - name: Verify Java Version
+        run: java -version
 
-    - name: Create scratch org
-      run: 'sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1'
-    
-    - name: Push source to scratch org / Code Validation
-      run: 'sfdx force:source:push'
-    
-    - name: Check code coverage
-      run: |
-        sfdx force:apex:test:run --codecoverage --resultformat json --synchronous --testlevel RunLocalTests --wait 10 > tests.json
-        coverage=$(jq .result.summary.orgWideCoverage tests.json | grep -Eo "[[:digit:]]+")
-        test $coverage -ge 75
-    
-    - name: Delete scratch org
-      if: always()
-      run: 'sfdx force:org:delete -p -u ci_scratch'
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        # Force to fail step after specific time.
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: "Example show SonarQube Quality Gate Status value"
+        run: echo "The Quality Gate status is ${{ steps.sonarqube-quality-gate-check.outputs.quality-gate-status }}"
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=rishibagekar_sf-unlocked-pakage-deployment
+            -Dsonar.organization=rishibagekar
+            -Dsonar.sources=cmd-loader/main/default
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.head_ref }}
+            -Dsonar.pullrequest.base=${{ github.base_ref }}
+            
+      
+      - name: Post analysis results to GitHub
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          curl -X POST \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments \
+          -d '{ "body": "**SonarCloud Analysis Results**: \nSee the detailed analysis on [SonarCloud](https://sonarcloud.io/dashboard?id=your_project_key)." }'
+          
