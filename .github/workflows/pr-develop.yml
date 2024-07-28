@@ -42,10 +42,7 @@ jobs:
       id: code_coverage
       run: |
         sfdx force:apex:test:run -c -r human -u ci_scratch -w 120
-        sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 120 > testcoverage.json
-        coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
-        echo "coverage=$coverage" >> $GITHUB_ENV
-
+    
     - name: "Generating Apex Code Coverage Report"
       uses: actions/upload-artifact@v2
       with:
