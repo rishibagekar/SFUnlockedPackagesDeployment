@@ -31,12 +31,11 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-      - name: Run Scan
-        run: |
-          sonar-scanner \
-            -Dsonar.projectKey=rishibagekar_sf-unlocked-pakage-deployment \
-            -Dsonar.organization=rishibagekar \
-            -Dsonar.sources=cmd-loader/main/default \
-            -Dsonar.host.url=https://sonarcloud.io \
+        with:
+          projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=rishibagekar_sf-unlocked-pakage-deployment
+            -Dsonar.organization=rishibagekar
+            -Dsonar.sources=cmd-loader/main/default
+            -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.login=$SONAR_TOKEN
