@@ -13,7 +13,6 @@ jobs:
     name: Authorization
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
-    container: salesforce/sfdx:latest
 
     steps:
     - name: Code Checkout
