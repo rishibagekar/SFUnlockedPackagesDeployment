@@ -6,11 +6,11 @@ on:
 
 jobs:
   pre_release:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Code Checkout
+      uses: actions/checkout@v3
 
     - name: Install Node JS
       uses: actions/setup-node@v3
@@ -24,7 +24,6 @@ jobs:
     - name: Install SFDX CLI
       run: |
           npm install @salesforce/cli --global
-          echo sf version
           sf --version
     
     - name: Populate auth file for Dev Hub
@@ -47,7 +46,7 @@ jobs:
         new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
         echo "version_id=${new_version_id}" >> $GITHUB_ENV
     
-    - name: Check code coverage
+    - name: Check Apex code coverage
       run: |
         test $(sfdx force:package:version:report -v devhub -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
     
