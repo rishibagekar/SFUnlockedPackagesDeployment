@@ -1,8 +1,4 @@
 #patterns
 
-#file/directory      user
-
-* @rishiibagekar
-
-cmd-loader/          @rishiibagekar
-.github/workflows/   @rishibagekar
+#file/directory   user
+*                 @rishiibagekar
