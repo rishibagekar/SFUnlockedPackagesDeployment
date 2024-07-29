@@ -92,7 +92,7 @@ jobs:
           echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
           mkdir changed-sources
-          sfdx sgd:source:delta -a 60.0 --to $SOURCE_BRANCH --from $TARGET_BRANCH --output changed-sources/ --generate-delta
+          sfdx sgd:source:delta -a 60.0 --to "HEAD" --from "origin/develop" --output changed-sources/ --generate-delta
           echo -e "--- package.xml generated with added and modified metadata ---"
           cat changed-sources/package/package.xml
           sf project deploy validate -d changed-sources/package/package.xml -o devint --verbose
