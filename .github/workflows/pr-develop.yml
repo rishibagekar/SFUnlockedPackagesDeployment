@@ -58,8 +58,8 @@ jobs:
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
-      SOURCE_BRANCH: ${{github.event.pull_request.head.ref}}
-      TARGET_BRANCH: ${{github.event.pull_request.base.ref}}
+      SOURCE_BRANCH: ${{github.base_ref}}
+      TARGET_BRANCH: ${{github.head_ref}}
 
     steps:
       - name: Code Checkout
@@ -67,7 +67,7 @@ jobs:
         with:
             ref: ${{github.head_ref }}
             fetch-depth: 0
-            
+
       - name: Install Node JS
         uses: actions/setup-node@v3
         with:
