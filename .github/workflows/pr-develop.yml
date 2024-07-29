@@ -59,6 +59,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install Node JS
+        uses: actions/setup-node@v3
+        with:
+            node-version: 18
+
+      - name: Install SFDX CLI
+        run: |
+          npm install @salesforce/cli --global
+          sf --version
+
+      - name: Install jq
+        run: |
+          sudo apt-get install jq
+
       - name: Devint Sandbox- Validation
         if: ${{ github.base_ref == 'develop' }}
         run: |
@@ -121,6 +135,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install Node JS
+        uses: actions/setup-node@v3
+        with:
+            node-version: 18
+
+      - name: Install SFDX CLI
+        run: |
+          npm install @salesforce/cli --global
+          sf --version
+
+      - name: Install jq
+        run: |
+          sudo apt-get install jq
+          
       - name: Devint Sandbox- Deployment
         if: ${{ github.ref == 'refs/heads/develop' }}
         run: |
