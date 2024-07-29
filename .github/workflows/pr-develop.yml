@@ -95,7 +95,8 @@ jobs:
           sfdx sgd:source:delta -a 60.0 --to "HEAD" --from "origin/develop" --output changed-sources/ --generate-delta
           echo -e "--- package.xml generated with added and modified metadata ---"
           cat changed-sources/package/package.xml
-          sf project deploy validate -d changed-sources/package/package.xml -o devint --verbose
+          echo "Package created successfully"
+          sf project deploy start --dry-run --manifest changed-sources/package/package.xml -o devint --verbose
           sfdx force:apex:test:run -c -v -r human -o devint -w 20
           sfdx force:apex:test:run -c -r json -d ./tests/apex -o devint -w 20 > testcoverage.json
           coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
