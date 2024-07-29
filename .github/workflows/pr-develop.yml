@@ -8,19 +8,14 @@ jobs:
   validate_pull_request:
     runs-on: ubuntu-latest
 
+    services:
+      salesforce-cli:
+        image: salesforce/salesforcedx:latest
+        options: --entrypoint ""
+
     steps:
     - name: Code Checkout
       uses: actions/checkout@v3
-
-    - name: Install Node JS
-      uses: actions/setup-node@v3
-      with:
-          node-version: 18
-
-    - name: Install SFDX CLI
-      run: |
-        npm install @salesforce/cli --global
-        sf --version
 
     - name: Install jq
       run: |
@@ -34,6 +29,8 @@ jobs:
       run: 'sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub -d'
 
     - name: Create scratch org
+      env: 
+        SFDX_CONTAINER: salesforce-cli
       run: 'sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1'
 
     - name: Push Code to Scratch Org
