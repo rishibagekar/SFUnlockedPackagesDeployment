@@ -76,6 +76,8 @@ jobs:
       - name: Devint Sandbox- Validation
         if: ${{ github.base_ref == 'develop' }}
         run: |
+          echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
+          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
           sf project deploy validate -d cmd-loader/main/default -o devint
           sfdx force:apex:test:run -c -v -r human -o devint -w 20
           sfdx force:apex:test:run -c -r json -d ./tests/apex -o devint -w 20 > testcoverage.json
@@ -86,6 +88,8 @@ jobs:
       - name: UAT Sandbox- Validation
         if: ${{ github.base_ref == 'uat' }}
         run: |
+          echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
+          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
           sf project deploy validate -d cmd-loader/main/default -o uat
           sfdx force:apex:test:run -c -v -r human -o uat -w 20
           sfdx force:apex:test:run -c -r json -d ./tests/apex -o uat -w 20 > testcoverage.json
@@ -148,10 +152,14 @@ jobs:
       - name: Install jq
         run: |
           sudo apt-get install jq
-          
+
       - name: Devint Sandbox- Deployment
         if: ${{ github.ref == 'refs/heads/develop' }}
         run: |
+          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
+          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
+          echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
+          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
           sfdx force:package:version:create -x -p "CopadoPackage" -w 60 -v devhub -b develop --code-coverage
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
           echo "version_id=${new_version_id}" >> $GITHUB_ENV
@@ -161,6 +169,10 @@ jobs:
       - name: UAT Sandbox- Deployment
         if: ${{ github.ref == 'refs/heads/uat' }}
         run: |
+          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
+          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
+          echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
+          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
           sfdx force:package:version:create -x -p "CopadoPackage" -w 60 -v devhub -b uat --code-coverage
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
           echo "version_id=${new_version_id}" >> $GITHUB_ENV
