@@ -46,7 +46,9 @@ jobs:
           sfdx sgd:source:delta -a 61.0 --to "HEAD" --from "origin/develop" --output changed-sources/ --generate-delta
           echo -e "--- package.xml generated with added and modified metadata ---"
           cat changed-sources/package/package.xml
-          sf project deploy validate --manifest changed-sources/package/package.xml -o devint --test-level RunLocalTests --verbose -w 20
+          echo -e "\n--- destructiveChanges.xml generated with deleted metadata ---"
+          cat changed-sources/destructiveChanges/destructiveChanges.xml
+          sf project deploy validate --manifest changed-sources/package/package.xml --post-destructive-changes changed-sources/destructiveChanges/destructiveChanges.xml -o devint --test-level RunLocalTests --verbose -w 20
 
       - name: UAT Sandbox-Validation
         if: ${{ github.base_ref == 'uat' }}
@@ -57,7 +59,9 @@ jobs:
           sfdx sgd:source:delta -a 61.0 --to "HEAD" --from "origin/uat" --output changed-sources/ --generate-delta
           echo -e "--- package.xml generated with added and modified metadata ---"
           cat changed-sources/package/package.xml
-          sf project deploy validate --manifest changed-sources/package/package.xml -o uat --test-level RunLocalTests --verbose -w 20
+          echo -e "\n--- destructiveChanges.xml generated with deleted metadata ---"
+          cat changed-sources/destructiveChanges/destructiveChanges.xml
+          sf project deploy validate --manifest changed-sources/package/package.xml --post-destructive-changes changed-sources/destructiveChanges/destructiveChanges.xml -o uat --test-level RunLocalTests --verbose -w 20
 
   code_coverage_report:
     name: Apex Code Coverage Report
@@ -164,15 +168,15 @@ jobs:
       - name: Dev Int Sandbox-Package Install
         if: ${{ github.ref == 'refs/heads/develop' }}
         run: |
-          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
           echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
           sfdx force:package:version:create -x -p "PackageTest" -w 60 -v devhub -b develop --code-coverage
-          echo "Package Version created successfully"
+          echo "Package Version Creation Successfull"
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
           test $(sfdx force:package:version:report -v devhub -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
+          echo "Apex Code Coverage Check Successfull"
           sfdx force:package:install -p $new_version_id -o devint --wait 10 --publishwait 10
+          echo "Package Version Installation on Dev Int Successfull"
 
       - name: UAT Sandbox-Package Install
         if: ${{ github.ref == 'refs/heads/uat' }}
@@ -180,10 +184,12 @@ jobs:
           echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
           sfdx force:package:version:create -x -p "PackageTest" -w 60 -v devhub -b uat --code-coverage
+          echo "Package Version Creation Successfull"
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
-          echo "version_id=${new_version_id}" >> $GITHUB_ENV
-          test $(sfdx force:package:version:report -v devhub -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
-          sfdx force:package:install -p "$version_id" -o uat --wait 10 --publishwait 10
+          test $(sfdx force:package:version:report -v devhub -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
+          echo "Apex Code Coverage Check Successfull"
+          sfdx force:package:install -p $new_version_id -o uat --wait 10 --publishwait 10
+          echo "Package Version Installation on UAT Successfull"
 
       - name: Store new version id
         run: |
