@@ -97,6 +97,15 @@ jobs:
           cat changed-sources/package/package.xml
           echo "Package created successfully"
           sf project deploy validate --manifest changed-sources/package/package.xml --results-dir ./tests/apex --coverage-formatters cobertura -o devint --test-level RunLocalTests --verbose -w 20
+
+      - name: Devint Sandbox- Code Coverage Report Generation
+        if: ${{ github.base_ref == 'develop' }}
+        run: |
+          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
+          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
+          sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1
+          sfdx force:source:push
+          sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 20
   
       - name: UAT Sandbox- Validation
         if: ${{ github.base_ref == 'uat' }}
@@ -114,7 +123,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: apex-code-coverage
-          path: tests/apex/coverage/cobertura.xml
+          path: tests/apex/test-result-codecoverage.json
 
   sonar-scan:
     needs: validate_pull_request
