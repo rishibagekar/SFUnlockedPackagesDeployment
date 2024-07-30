@@ -96,7 +96,7 @@ jobs:
           echo -e "--- package.xml generated with added and modified metadata ---"
           cat changed-sources/package/package.xml
           echo "Package created successfully"
-          sf project deploy validate --manifest changed-sources/package/package.xml --results-dir ./tests/apex --coverage-formatters json-summary -o devint --test-level RunLocalTests --verbose -w 20
+          sf project deploy validate --manifest changed-sources/package/package.xml --results-dir ./tests/apex --coverage-formatters cobertura -o devint --test-level RunLocalTests --verbose -w 20
   
       - name: UAT Sandbox- Validation
         if: ${{ github.base_ref == 'uat' }}
@@ -114,7 +114,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: apex-code-coverage
-          path: tests/apex/coverage/coverage-summary.json
+          path: tests/apex/coverage/cobertura.xml
 
   sonar-scan:
     needs: validate_pull_request
@@ -129,7 +129,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: apex-code-coverage
-          path: tests/apex
+          path: tests/apex/coverage
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
