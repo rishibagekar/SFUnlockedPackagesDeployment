@@ -166,7 +166,7 @@ jobs:
         run: |
           echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
-          sfdx force:package:version:create -x -p "TestPackage" -w 60 -v devhub -b develop --code-coverage
+          sfdx force:package:version:create -x -p "PackageTest" -w 60 -v devhub -b develop --code-coverage
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
           echo "version_id=${new_version_id}" >> $GITHUB_ENV
           test $(sfdx force:package:version:report -v devhub -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
@@ -177,7 +177,7 @@ jobs:
         run: |
           echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
-          sfdx force:package:version:create -x -p "TestPackage" -w 60 -v devhub -b uat --code-coverage
+          sfdx force:package:version:create -x -p "PackageTest" -w 60 -v devhub -b uat --code-coverage
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
           echo "version_id=${new_version_id}" >> $GITHUB_ENV
           test $(sfdx force:package:version:report -v devhub -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
