@@ -33,10 +33,6 @@ jobs:
           npm install @salesforce/cli --global
           sf --version
 
-      - name: Install jq
-        run: |
-          sudo apt-get install jq
-
       - name: Install sgd-delta
         run: |
           echo y | sfdx plugins:install sfdx-git-delta
@@ -70,6 +66,21 @@ jobs:
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
+      - name: Code Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install Node JS
+        uses: actions/setup-node@v3
+        with:
+            node-version: 18
+
+      - name: Install SFDX CLI
+        run: |
+          npm install @salesforce/cli --global
+          sf --version
+
       - name: Authorization to DevHub & Create Scratch Org
         run: |
           echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
@@ -111,7 +122,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
+          
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
         uses: sonarsource/sonarqube-quality-gate-action@master
