@@ -164,11 +164,14 @@ jobs:
       - name: Dev Int Sandbox-Package Install
         if: ${{ github.ref == 'refs/heads/develop' }}
         run: |
+          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
+          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
           echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
           sfdx force:package:version:create -x -p "PackageTest" -w 60 -v devhub -b develop --code-coverage
+          echo "Package Version created successfully"
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
-          echo "version_id=${new_version_id}" >> $GITHUB_ENV
+          echo "version_id=${new_version_id}"
           test $(sfdx force:package:version:report -v devhub -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
           sfdx force:package:install -p "$version_id" -o devint --wait 10 --publishwait 10
 
