@@ -114,7 +114,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: apex-code-coverage
-          path: tests/apex
+          path: tests/apex/coverage/coverage-summary.json
 
   sonar-scan:
     needs: validate_pull_request
