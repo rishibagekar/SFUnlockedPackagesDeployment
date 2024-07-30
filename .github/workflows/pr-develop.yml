@@ -102,7 +102,7 @@ jobs:
         if: ${{ github.base_ref == 'develop' }}
         run: |
           echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
+          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub -d
           sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1
           sfdx force:source:push
           sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 20
