@@ -9,52 +9,8 @@ on:
     branches: [ develop, uat ]
 
 jobs:
-  authorize_sandbox:
-    name: Authorization
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Code Checkout
-      uses: actions/checkout@v3
-      with:
-          ref: ${{github.head_ref }}
-          fetch-depth: 0
-
-    - name: Install Node JS
-      uses: actions/setup-node@v3
-      with:
-          node-version: 18
-
-    - name: Install SFDX CLI
-      run: |
-        npm install @salesforce/cli --global
-        sf --version
-
-    - name: Install jq
-      run: |
-        sudo apt-get install jq
-
-    - name: DevHub - Authorization
-      run: |
-        echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
-        sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
-
-    - name: Devint Sandbox - Authorization
-      if: ${{ github.base_ref == 'develop' }}
-      run: |
-        echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
-        sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
-
-    - name: UAT Sandbox - Validate & ApexCodeCoverageCheck
-      if: ${{ github.base_ref == 'uat' }}
-      run: |
-        echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
-        sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
-
   validate_pull_request:
     name: Validation
-    needs: authorize_sandbox
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
@@ -95,38 +51,48 @@ jobs:
           sfdx sgd:source:delta -a 61.0 --to "HEAD" --from "origin/develop" --output changed-sources/ --generate-delta
           echo -e "--- package.xml generated with added and modified metadata ---"
           cat changed-sources/package/package.xml
-          echo "Package created successfully"
-          sf project deploy validate --manifest changed-sources/package/package.xml --results-dir ./tests/apex --coverage-formatters cobertura -o devint --test-level RunLocalTests --verbose -w 20
+          sf project deploy validate --manifest changed-sources/package/package.xml -o devint --test-level RunLocalTests --verbose -w 20
 
-      - name: Devint Sandbox- Code Coverage Report Generation
-        if: ${{ github.base_ref == 'develop' }}
-        run: |
-          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub -d
-          sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1
-          sfdx force:source:push
-          sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 20
-  
       - name: UAT Sandbox- Validation
         if: ${{ github.base_ref == 'uat' }}
         run: |
           echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
-          sf project deploy validate -d cmd-loader/main/default -o uat
-          sfdx force:apex:test:run -c -v -r human -o uat -w 20
-          sfdx force:apex:test:run -c -r json -d ./tests/apex -o uat -w 20 > testcoverage.json
-          coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
-          echo "Org Wide Code Coverage: $coverage"
-          test $coverage -ge 75
+          mkdir changed-sources
+          sfdx sgd:source:delta -a 61.0 --to "HEAD" --from "origin/uat" --output changed-sources/ --generate-delta
+          echo -e "--- package.xml generated with added and modified metadata ---"
+          cat changed-sources/package/package.xml
+          sf project deploy validate --manifest changed-sources/package/package.xml -o uat --test-level RunLocalTests --verbose -w 20
+
+  code-coverage:
+    name: Code Coverage Report
+    needs: validate_pull_request
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Authorization to DevHub & Create Scratch Org
+        run: |
+          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
+          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub -d
+          sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1
+
+      - name: Code Coverage Report Generation
+        run: |
+          sfdx force:source:push
+          sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 20
 
       - name: Generating Apex Code Coverage Report
         uses: actions/upload-artifact@v2
         with:
           name: apex-code-coverage
           path: tests/apex/test-result-codecoverage.json
-
+  
+      - name: Delete scratch org
+        if: always()
+        run: sfdx force:org:delete -p -u ci_scratch
+        
   sonar-scan:
-    needs: validate_pull_request
+    needs: code-coverage
     runs-on: ubuntu-latest
     steps:
       - name: Code Checkout
@@ -156,7 +122,6 @@ jobs:
 
   deployment:
     name: deployment
-    needs: authorize_sandbox
     if: always() && github.event_name == 'push'
     runs-on: ubuntu-latest
 
@@ -175,11 +140,14 @@ jobs:
         run: |
           sudo apt-get install jq
 
-      - name: Devint Sandbox- Deployment
-        if: ${{ github.ref == 'refs/heads/develop' }}
+      - name: Authorize DevHub
         run: |
           echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
+
+      - name: Devint Sandbox- Deployment
+        if: ${{ github.ref == 'refs/heads/develop' }}
+        run: |
           echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
           sfdx force:package:version:create -x -p "CopadoPackage" -w 60 -v devhub -b develop --code-coverage
@@ -191,8 +159,6 @@ jobs:
       - name: UAT Sandbox- Deployment
         if: ${{ github.ref == 'refs/heads/uat' }}
         run: |
-          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
           echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
           sfdx force:package:version:create -x -p "CopadoPackage" -w 60 -v devhub -b uat --code-coverage
