@@ -1,0 +1,41 @@
+name: Sonar Scan
+on:
+  pull_request:
+    branches: [ main ]
+    
+jobs:
+  sfdxscanner:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v3
+
+    - name: Install Node JS
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    - name: Install SFDX CLI
+      run: |
+        npm install @salesforce/cli --global
+        echo sf version
+        sf --version
+
+    - name: Install SFDX SFDXScanner
+      run: sfdx plugins install @salesforce/sfdx-scanner
+
+    - name: Apex Static Analysis
+      run: sfdx scanner run --target "cmd-loader" -f junit
+
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
