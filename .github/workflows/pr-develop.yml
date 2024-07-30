@@ -96,8 +96,7 @@ jobs:
           echo -e "--- package.xml generated with added and modified metadata ---"
           cat changed-sources/package/package.xml
           echo "Package created successfully"
-          sf project deploy start --dry-run --manifest changed-sources/package/package.xml -o devint --verbose
-          sfdx force:apex:test:run -c -v -r human -l RunSpecifiedTests -r AdditionTest,ChangePasswordControllerTest,SiteLoginControllerTest,Subtraction -o devint -w 20
+          sf project deploy validate --manifest changed-sources/package/package.xml --results-dir ./tests/apex -o devint --test-level RunLocalTests --verbose -w 20
           sfdx force:apex:test:run -c -r json -d ./tests/apex -l RunSpecifiedTests -r AdditionTest,ChangePasswordControllerTest,SiteLoginControllerTest,Subtraction -o devint -w 20 > testcoverage.json
           coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
           echo "Org Wide Code Coverage: $coverage"
