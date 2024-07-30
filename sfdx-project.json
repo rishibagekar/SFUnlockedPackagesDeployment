@@ -9,13 +9,22 @@
       "package": "TestPackage",
       "versionName": "ver 1.0",
       "versionNumber": "1.0.0.NEXT",
-      "default": true,
+      "default": false,
       "versionDescription": "Testing Package"
+    },
+    {
+      "path": "cmd-loader",
+      "package": "PackageTest",
+      "versionName": "ver 1.0",
+      "versionNumber": "1.0.0.NEXT",
+      "default": true,
+      "versionDescription": "Package Testing"
     }
   ],
   "packageAliases": {
     "TestPackage": "0Hoao00000025EvCAI",
     "TestPackage@1.0.0-1": "04tao000000hMbZAAU",
-    "TestPackage@1.0.0-1-develop": "04tao000000hMdBAAU"
+    "TestPackage@1.0.0-1-develop": "04tao000000hMdBAAU",
+    "PackageTest": "0Hoao00000025V3CAI"
   }
 }
