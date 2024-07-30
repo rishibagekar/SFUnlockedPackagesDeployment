@@ -2,7 +2,7 @@ name: Pull Request to Develop
 
 on:
   pull_request:
-    branches: [ develop ]
+    branches: [ uat ]
 
 jobs:
   validate_pull_request:
@@ -36,7 +36,7 @@ jobs:
     - name: Create scratch org
       run: 'sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1'
     
-    - name: Push source to scratch org / Code Validation
+    - name: Push source to scratch org
       run: 'sfdx force:source:push'
     
     - name: Check code coverage
