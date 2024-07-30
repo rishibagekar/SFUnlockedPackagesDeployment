@@ -1,5 +1,4 @@
-name: Pull Request to Develop
-
+name: Pull Request Workflow for Unlocked Packages Deployment
 on:
   push:
     branches: [ develop, uat ]
@@ -10,7 +9,7 @@ on:
 
 jobs:
   validate_pull_request:
-    name: Validation
+    name: Validation of Pull Request
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
@@ -18,7 +17,7 @@ jobs:
       TARGET_BRANCH: ${{ github.base_ref }}
 
     steps:
-      - name: Code Checkout
+      - name: Checkout Code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -33,12 +32,12 @@ jobs:
           npm install @salesforce/cli --global
           sf --version
 
-      - name: Install sgd-delta
+      - name: Install SGD Plugin
         run: |
           echo y | sfdx plugins:install sfdx-git-delta
           sfdx plugins
 
-      - name: Devint Sandbox- Validation
+      - name: Dev Int Sandbox-Validation
         if: ${{ github.base_ref == 'develop' }}
         run: |
           echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
@@ -49,7 +48,7 @@ jobs:
           cat changed-sources/package/package.xml
           sf project deploy validate --manifest changed-sources/package/package.xml -o devint --test-level RunLocalTests --verbose -w 20
 
-      - name: UAT Sandbox- Validation
+      - name: UAT Sandbox-Validation
         if: ${{ github.base_ref == 'uat' }}
         run: |
           echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
@@ -60,13 +59,13 @@ jobs:
           cat changed-sources/package/package.xml
           sf project deploy validate --manifest changed-sources/package/package.xml -o uat --test-level RunLocalTests --verbose -w 20
 
-  code-coverage:
-    name: Code Coverage Report
+  code_coverage_report:
+    name: Apex Code Coverage Report
     needs: validate_pull_request
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - name: Code Checkout
+      - name: Checkout Code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -87,12 +86,12 @@ jobs:
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub -d
           sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1
 
-      - name: Code Coverage Report Generation
+      - name: Apex Code Coverage Report Generation
         run: |
           sfdx force:source:push
           sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 20
 
-      - name: Generating Apex Code Coverage Report
+      - name: Upload Apex Code Coverage Report
         uses: actions/upload-artifact@v2
         with:
           name: apex-code-coverage
@@ -102,11 +101,12 @@ jobs:
         if: always()
         run: sfdx force:org:delete -p -u ci_scratch
         
-  sonar-scan:
-    needs: code-coverage
+  sonar_scan:
+    name: SonarQube Scan
+    needs: code_coverage_report
     runs-on: ubuntu-latest
     steps:
-      - name: Code Checkout
+      - name: Checkout Code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -131,8 +131,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-  deployment:
-    name: deployment
+  deploy_package:
+    name: Unlocked Package Installation
     if: always() && github.event_name == 'push'
     runs-on: ubuntu-latest
 
@@ -156,7 +156,7 @@ jobs:
           echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
 
-      - name: Devint Sandbox- Deployment
+      - name: Dev Int Sandbox-Package Install
         if: ${{ github.ref == 'refs/heads/develop' }}
         run: |
           echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
@@ -165,9 +165,9 @@ jobs:
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
           echo "version_id=${new_version_id}" >> $GITHUB_ENV
           test $(sfdx force:package:version:report -v devhub -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
-          sfdx force:package:install -p "$version_id" -u devint --wait 10 --publishwait 10
+          sfdx force:package:install -p "$version_id" -o devint --wait 10 --publishwait 10
 
-      - name: UAT Sandbox- Deployment
+      - name: UAT Sandbox-Package Install
         if: ${{ github.ref == 'refs/heads/uat' }}
         run: |
           echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
@@ -176,7 +176,7 @@ jobs:
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
           echo "version_id=${new_version_id}" >> $GITHUB_ENV
           test $(sfdx force:package:version:report -v devhub -p "$version_id" --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
-          sfdx force:package:install -p "$version_id" -u uat --wait 10 --publishwait 10
+          sfdx force:package:install -p "$version_id" -o uat --wait 10 --publishwait 10
 
       - name: Store new version id
         run: |
