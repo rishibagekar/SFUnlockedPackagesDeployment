@@ -23,8 +23,8 @@
   ],
   "packageAliases": {
     "TestPackage": "0Hoao00000025EvCAI",
+    "PackageTest": "0Hoao00000025V3CAI",
     "TestPackage@1.0.0-1": "04tao000000hMbZAAU",
-    "TestPackage@1.0.0-1-develop": "04tao000000hMdBAAU",
-    "PackageTest": "0Hoao00000025V3CAI"
+    "TestPackage@1.0.0-1-develop": "04tao000000hMdBAAU"
   }
 }
