@@ -138,7 +138,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: apex-code-coverage
-          path: tests/apex/coverage
+          path: tests/apex
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
