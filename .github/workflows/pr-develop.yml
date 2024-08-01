@@ -32,36 +32,19 @@ jobs:
           npm install @salesforce/cli --global
           sf --version
 
-      - name: Install SGD Plugin
-        run: |
-          echo y | sfdx plugins:install sfdx-git-delta
-          sfdx plugins
-
       - name: Dev Int Sandbox-Validation
         if: ${{ github.base_ref == 'develop' }}
         run: |
           echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
-          mkdir changed-sources
-          sfdx sgd:source:delta -a 61.0 --to "HEAD" --from "origin/develop" --output changed-sources/ --generate-delta
-          echo -e "--- package.xml generated with added and modified metadata ---"
-          cat changed-sources/package/package.xml
-          echo -e "\n--- destructiveChanges.xml generated with deleted metadata ---"
-          cat changed-sources/destructiveChanges/destructiveChanges.xml
-          sf project deploy validate --manifest changed-sources/package/package.xml --post-destructive-changes changed-sources/destructiveChanges/destructiveChanges.xml -o devint --test-level RunLocalTests --verbose -w 20
+          sf project deploy validate -d cmd-loader/main/default -o devint --test-level RunLocalTests --verbose -w 20
 
       - name: UAT Sandbox-Validation
         if: ${{ github.base_ref == 'uat' }}
         run: |
           echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
-          mkdir changed-sources
-          sfdx sgd:source:delta -a 61.0 --to "HEAD" --from "origin/uat" --output changed-sources/ --generate-delta
-          echo -e "--- package.xml generated with added and modified metadata ---"
-          cat changed-sources/package/package.xml
-          echo -e "\n--- destructiveChanges.xml generated with deleted metadata ---"
-          cat changed-sources/destructiveChanges/destructiveChanges.xml
-          sf project deploy validate --manifest changed-sources/package/package.xml --post-destructive-changes changed-sources/destructiveChanges/destructiveChanges.xml -o uat --test-level RunLocalTests --verbose -w 20
+          sf project deploy validate -d cmd-loader/main/default -o uat --test-level RunLocalTests --verbose -w 20
 
   code_coverage_report:
     name: Apex Code Coverage Report
