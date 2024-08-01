@@ -73,10 +73,15 @@ jobs:
           sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub -d
           sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1
 
-      - name: Apex Code Coverage Report Generation
+      - name: Package Version Installation on Scratch Org
         run: |
-          sfdx force:source:push
-          sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 20
+          sfdx force:package:version:create -x -p "PackageTest" -w 60 -v devhub --code-coverage
+          new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
+          test $(sfdx force:package:version:report -v devhub -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
+          sfdx force:package:install -p $new_version_id -o ci_scratch --wait 10 --publishwait 10
+
+      - name: Apex Code Coverage Report Generation
+        run: sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 20
 
       - name: Upload Apex Code Coverage Report
         uses: actions/upload-artifact@v2
