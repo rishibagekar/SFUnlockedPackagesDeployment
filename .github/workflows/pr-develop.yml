@@ -36,7 +36,7 @@ jobs:
       - name: Dev Int Sandbox-Validation
         run: |
           echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -s -u
-          sf project deploy validate -d cmd-loader/main/default --test-level RunLocalTests --verbose -w 20
+          sf project deploy validate -d cmd-loader/main/default --test-level RunAllTestsInOrg --verbose -w 20
 
   code_coverage_report:
     name: Apex Code Coverage Report
