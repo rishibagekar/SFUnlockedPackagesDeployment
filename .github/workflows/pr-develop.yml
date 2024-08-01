@@ -145,20 +145,16 @@ jobs:
         run: |
           sudo apt-get install jq
 
-      - name: Authorize DevHub
-        run: |
-          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url d -u
-
       - name: Dev Int Sandbox-Package Install
         run: |
           echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
           sf package version create -x -p "PackageTest" -w 60 -b develop --code-coverage
           echo "Package Version Creation Successfull"
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
-          test $(sf package version report -d -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
+          test $(sf package version report -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
           echo "Apex Code Coverage Check Successfull"
           echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -s -u
-          sf package install -p $new_version_id -o devint -w 10 -b 10
+          sf package install -p $new_version_id -w 10 -b 10
           echo "Package Version Installation on Dev Int Successfull"
 
       - name: Store new Package version details in sfdx-project.json file
