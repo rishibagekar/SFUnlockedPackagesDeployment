@@ -1,11 +1,13 @@
 name: Pull Request Workflow for Unlocked Packages Deployment
 on:
   push:
-    branches: [ develop, uat ]
+    branches: [ develop ]
     paths:
       - 'cmd-loader/main/default/**'
   pull_request:
-    branches: [ develop, uat ]
+    branches: [ develop ]
+    paths:
+      - 'cmd-loader/main/default/**'
 
 jobs:
   validate_pull_request:
@@ -30,21 +32,11 @@ jobs:
       - name: Install SFDX CLI
         run: |
           npm install @salesforce/cli --global
-          sf --version
 
       - name: Dev Int Sandbox-Validation
-        if: ${{ github.base_ref == 'develop' }}
         run: |
-          echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
-          sf project deploy validate -d cmd-loader/main/default -o devint --test-level RunLocalTests --verbose -w 20
-
-      - name: UAT Sandbox-Validation
-        if: ${{ github.base_ref == 'uat' }}
-        run: |
-          echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
-          sf project deploy validate -d cmd-loader/main/default -o uat --test-level RunLocalTests --verbose -w 20
+          echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -u -a devint
+          sf project deploy validate -d force-app/main/default -o devint --test-level RunAllTestsInOrg --verbose -w 20
 
   code_coverage_report:
     name: Apex Code Coverage Report
@@ -60,28 +52,33 @@ jobs:
       - name: Install Node JS
         uses: actions/setup-node@v3
         with:
-            node-version: 18
+          node-version: 18
 
       - name: Install SFDX CLI
         run: |
           npm install @salesforce/cli --global
-          sf --version
+
+      - name: Install jq
+        run: |
+          sudo apt-get install jq
 
       - name: Authorization to DevHub & Create Scratch Org
         run: |
-          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub -d
-          sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1
+          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -u -a devhub
+          sf org create scratch -f config/project-scratch-def.json -a ci_scratch -v devhub -y 1
 
       - name: Package Version Installation on Scratch Org
         run: |
-          sfdx force:package:version:create -x -p "PackageTest" -w 60 -v devhub --code-coverage
+          sf package version create -x -p "PackageTest" -w 60 -v devhub --code-coverage
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
-          test $(sfdx force:package:version:report -v devhub -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
-          sfdx force:package:install -p $new_version_id -o ci_scratch --wait 10 --publishwait 10
+          test $(sf package version report -v devhub -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
+          sf package install -p $new_version_id -o ci_scratch -w 10 -b 10
 
       - name: Apex Code Coverage Report Generation
-        run: sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 20
+        run: |
+          sf apex run test -c -r json -d ./tests/apex -o ci_scratch -w 20
+          coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
+          test $coverage -ge 75
 
       - name: Upload Apex Code Coverage Report
         uses: actions/upload-artifact@v2
@@ -91,7 +88,7 @@ jobs:
   
       - name: Delete scratch org
         if: always()
-        run: sfdx force:org:delete -p -u ci_scratch
+        run: sf org delete scratch -p -o ci_scratch
         
   sonar_scan:
     name: SonarQube Scan
@@ -142,7 +139,6 @@ jobs:
       - name: Install SFDX CLI
         run: |
           npm install @salesforce/cli --global
-          sf --version
 
       - name: Install jq
         run: |
@@ -150,36 +146,20 @@ jobs:
 
       - name: Authorize DevHub
         run: |
-          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
+          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -u -a devhub
 
       - name: Dev Int Sandbox-Package Install
-        if: ${{ github.ref == 'refs/heads/develop' }}
         run: |
-          echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
-          sfdx force:package:version:create -x -p "PackageTest" -w 60 -v devhub -b develop --code-coverage
+          echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -u -a devint
+          sf package version create -x -p "PackageTest" -w 60 -v devhub -b develop --code-coverage
           echo "Package Version Creation Successfull"
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
-          test $(sfdx force:package:version:report -v devhub -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
+          test $(sf package version report -v devhub -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
           echo "Apex Code Coverage Check Successfull"
-          sfdx force:package:install -p $new_version_id -o devint --wait 10 --publishwait 10
+          sf package install -p $new_version_id -o devint -w 10 -b 10
           echo "Package Version Installation on Dev Int Successfull"
 
-      - name: UAT Sandbox-Package Install
-        if: ${{ github.ref == 'refs/heads/uat' }}
-        run: |
-          echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
-          sfdx force:package:version:create -x -p "PackageTest" -w 60 -v devhub -b uat --code-coverage
-          echo "Package Version Creation Successfull"
-          new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
-          test $(sfdx force:package:version:report -v devhub -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
-          echo "Apex Code Coverage Check Successfull"
-          sfdx force:package:install -p $new_version_id -o uat --wait 10 --publishwait 10
-          echo "Package Version Installation on UAT Successfull"
-
-      - name: Store new version id
+      - name: Store new Package version details in sfdx-project.json file
         run: |
           sed -i -e "s/04t[[:alnum:]]\{15\}/${version_id}/" README.md
           git config user.name "release[bot]"
