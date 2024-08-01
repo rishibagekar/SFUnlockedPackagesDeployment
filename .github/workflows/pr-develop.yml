@@ -72,14 +72,13 @@ jobs:
           echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
           sf package version create -x -p "PackageTest" -w 60 --code-coverage
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
-          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
           test $(sf package version report -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
           sf package install -p $new_version_id -o ci_scratch -w 10 -b 10
 
       - name: Apex Code Coverage Report Generation
         run: |
           sf apex run test -c -r json -d ./tests/apex -o ci_scratch -w 20
-          coverage=$(jq .result.summary.orgWideCoverage testcoverage.json | grep -Eo "[[:digit:]]+")
+          coverage=$(jq .result.summary.orgWideCoverage test-result-codecoverage.json | grep -Eo "[[:digit:]]+")
           test $coverage -ge 75
 
       - name: Upload Apex Code Coverage Report
