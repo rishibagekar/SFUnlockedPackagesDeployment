@@ -35,7 +35,7 @@ jobs:
 
       - name: Dev Int Sandbox-Validation
         run: |
-          echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -u -a devint
+          echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -s -u -a devint
           sf project deploy validate -d force-app/main/default -o devint --test-level RunAllTestsInOrg --verbose -w 20
 
   code_coverage_report:
@@ -64,7 +64,7 @@ jobs:
 
       - name: Authorization to DevHub & Create Scratch Org
         run: |
-          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -u -a devhub
+          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -s -u -a devhub
           sf org create scratch -f config/project-scratch-def.json -a ci_scratch -v devhub -y 1
 
       - name: Package Version Installation on Scratch Org
