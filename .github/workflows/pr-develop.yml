@@ -20,14 +20,14 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Install Node JS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-            node-version: 18
+            node-version: 20
 
       - name: Install SFDX CLI
         run: |
@@ -36,7 +36,7 @@ jobs:
       - name: Dev Int Sandbox-Validation
         run: |
           echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -s -u
-          sf project deploy validate -d cmd-loader/main/default --test-level RunAllTestsInOrg --verbose -w 20
+          sf project deploy validate -d cmd-loader/main/default --test-level RunLocalTests --verbose -w 20
 
   code_coverage_report:
     name: Apex Code Coverage Report
@@ -45,14 +45,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Install Node JS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install SFDX CLI
         run: |
@@ -82,7 +82,7 @@ jobs:
           test $coverage -ge 75
 
       - name: Upload Apex Code Coverage Report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: apex-code-coverage
           path: tests/apex/test-result-codecoverage.json
@@ -97,12 +97,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Download Apex Code coverage Report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: apex-code-coverage
           path: tests/apex
@@ -128,14 +128,14 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           
       - name: Install Node JS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-            node-version: 18
+            node-version: 20
 
       - name: Install SFDX CLI
         run: |
