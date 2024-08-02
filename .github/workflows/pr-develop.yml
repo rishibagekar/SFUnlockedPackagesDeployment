@@ -1,11 +1,13 @@
 name: Pull Request Workflow for Unlocked Packages Deployment
 on:
   push:
-    branches: [ develop, uat ]
+    branches: [ develop ]
     paths:
       - 'cmd-loader/main/default/**'
   pull_request:
-    branches: [ develop, uat ]
+    branches: [ develop ]
+    paths:
+      - 'cmd-loader/main/default/**'
 
 jobs:
   validate_pull_request:
@@ -18,50 +20,23 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Install Node JS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-            node-version: 18
+            node-version: 20
 
       - name: Install SFDX CLI
         run: |
           npm install @salesforce/cli --global
-          sf --version
-
-      - name: Install SGD Plugin
-        run: |
-          echo y | sfdx plugins:install sfdx-git-delta
-          sfdx plugins
 
       - name: Dev Int Sandbox-Validation
-        if: ${{ github.base_ref == 'develop' }}
         run: |
-          echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
-          mkdir changed-sources
-          sfdx sgd:source:delta -a 61.0 --to "HEAD" --from "origin/develop" --output changed-sources/ --generate-delta
-          echo -e "--- package.xml generated with added and modified metadata ---"
-          cat changed-sources/package/package.xml
-          echo -e "\n--- destructiveChanges.xml generated with deleted metadata ---"
-          cat changed-sources/destructiveChanges/destructiveChanges.xml
-          sf project deploy validate --manifest changed-sources/package/package.xml --post-destructive-changes changed-sources/destructiveChanges/destructiveChanges.xml -o devint --test-level RunLocalTests --verbose -w 20
-
-      - name: UAT Sandbox-Validation
-        if: ${{ github.base_ref == 'uat' }}
-        run: |
-          echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
-          mkdir changed-sources
-          sfdx sgd:source:delta -a 61.0 --to "HEAD" --from "origin/uat" --output changed-sources/ --generate-delta
-          echo -e "--- package.xml generated with added and modified metadata ---"
-          cat changed-sources/package/package.xml
-          echo -e "\n--- destructiveChanges.xml generated with deleted metadata ---"
-          cat changed-sources/destructiveChanges/destructiveChanges.xml
-          sf project deploy validate --manifest changed-sources/package/package.xml --post-destructive-changes changed-sources/destructiveChanges/destructiveChanges.xml -o uat --test-level RunLocalTests --verbose -w 20
+          echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -s -u
+          sf project deploy validate -d cmd-loader/main/default --test-level RunAllTestsInOrg --verbose -w 20
 
   code_coverage_report:
     name: Apex Code Coverage Report
@@ -70,40 +45,51 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Install Node JS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-            node-version: 18
+          node-version: 20
 
       - name: Install SFDX CLI
         run: |
           npm install @salesforce/cli --global
-          sf --version
+
+      - name: Install jq
+        run: |
+          sudo apt-get install jq
 
       - name: Authorization to DevHub & Create Scratch Org
         run: |
-          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub -d
-          sfdx force:org:create -f config/project-scratch-def.json -a ci_scratch -s -d 1
+          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
+          sf org create scratch -f config/project-scratch-def.json -a ci_scratch -y 1
+
+      - name: Package Version Installation on Scratch Org
+        run: |
+          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
+          sf package version create -x -p "PackageTest" -w 60 --code-coverage
+          new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
+          test $(sf package version report -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
+          sf package install -p $new_version_id -o ci_scratch -w 10 -b 10
 
       - name: Apex Code Coverage Report Generation
         run: |
-          sfdx force:source:push
-          sfdx force:apex:test:run -c -r json -d ./tests/apex -u ci_scratch -w 20
+          sf apex run test -c -r json -d ./tests/apex -o ci_scratch -w 20 > test.json
+          coverage=$(jq .result.summary.orgWideCoverage test.json | grep -Eo "[[:digit:]]+")
+          test $coverage -ge 75
 
       - name: Upload Apex Code Coverage Report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: apex-code-coverage
           path: tests/apex/test-result-codecoverage.json
   
       - name: Delete scratch org
         if: always()
-        run: sfdx force:org:delete -p -u ci_scratch
+        run: sf org delete scratch -p -o ci_scratch
         
   sonar_scan:
     name: SonarQube Scan
@@ -111,12 +97,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Download Apex Code coverage Report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: apex-code-coverage
           path: tests/apex
@@ -142,56 +128,50 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           
       - name: Install Node JS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-            node-version: 18
+            node-version: 20
 
       - name: Install SFDX CLI
         run: |
           npm install @salesforce/cli --global
-          sf --version
 
       - name: Install jq
         run: |
           sudo apt-get install jq
 
-      - name: Authorize DevHub
-        run: |
-          echo ${{secrets.AUTHURL_COPADOPROD}} > ./AUTHURL_COPADOPROD.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOPROD.txt -a devhub
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
       - name: Dev Int Sandbox-Package Install
-        if: ${{ github.ref == 'refs/heads/develop' }}
         run: |
-          echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
-          sfdx force:package:version:create -x -p "PackageTest" -w 60 -v devhub -b develop --code-coverage
+          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
+          sf package version create -x -p "PackageTest" -w 60 -b develop --code-coverage
           echo "Package Version Creation Successfull"
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
-          test $(sfdx force:package:version:report -v devhub -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
+          test $(sf package version report -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
           echo "Apex Code Coverage Check Successfull"
-          sfdx force:package:install -p $new_version_id -o devint --wait 10 --publishwait 10
+          echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -s -u
+          sf package install -p $new_version_id -w 10 -b 10
           echo "Package Version Installation on Dev Int Successfull"
 
-      - name: UAT Sandbox-Package Install
-        if: ${{ github.ref == 'refs/heads/uat' }}
-        run: |
-          echo ${{secrets.AUTHURL_COPADOUAT}} > ./AUTHURL_COPADOUAT.txt
-          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOUAT.txt -a uat
-          sfdx force:package:version:create -x -p "PackageTest" -w 60 -v devhub -b uat --code-coverage
-          echo "Package Version Creation Successfull"
-          new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
-          test $(sfdx force:package:version:report -v devhub -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
-          echo "Apex Code Coverage Check Successfull"
-          sfdx force:package:install -p $new_version_id -o uat --wait 10 --publishwait 10
-          echo "Package Version Installation on UAT Successfull"
-
-      - name: Store new version id
+      - name: Store new Package version details in sfdx-project.json file
         run: |
           sed -i -e "s/04t[[:alnum:]]\{15\}/${version_id}/" README.md
           git config user.name "release[bot]"
