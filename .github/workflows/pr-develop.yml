@@ -30,9 +30,8 @@ jobs:
         id: fetch_tests
         run: |
           cd cmd-loader/main/default/classes
-          TEST_CLASSES=$(grep -rl '@isTest' ./*.cls | sed 's/.\///;s/.cls$//' | tr '\n' ',' | sed 's/,$//')
-          echo $TEST_CLASSES
-          echo "::set-output name=classes::$TEST_CLASSES"
+          grep -rl '@isTest' ./*.cls > test_class.txt
+          cat test_class.txt
 
       - name: Dev Int Sandbox-Validation
         run: |
