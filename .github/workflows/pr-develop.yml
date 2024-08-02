@@ -15,7 +15,7 @@ jobs:
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     container:
-        image: salesforce/cli:latest-slim
+        image: salesforce/cli:latest-full
     env:
       SOURCE_BRANCH: ${{ github.head_ref }}
       TARGET_BRANCH: ${{ github.base_ref }}
@@ -37,17 +37,12 @@ jobs:
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     container:
-        image: salesforce/cli:latest-slim
+        image: salesforce/cli:latest-full
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Install jq
-        shell: bash
-        run: |
-          apt-get install jq
 
       - name: Authorization to DevHub & Create Scratch Org
         run: |
@@ -113,19 +108,14 @@ jobs:
     if: always() && github.event_name == 'push'
     runs-on: ubuntu-latest
     container:
-        image: salesforce/cli:latest-slim
+        image: salesforce/cli:latest-full
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
-      - name: Install jq
-        shell: bash
-        run: |
-          apt-get install jq
-
+        
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
         env:
