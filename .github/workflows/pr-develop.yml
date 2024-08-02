@@ -36,20 +36,13 @@ jobs:
     needs: validate_pull_request
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    container:
+        image: salesforce/cli:latest-slim
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Install Node JS
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install SFDX CLI
-        run: |
-          npm install @salesforce/cli --global
 
       - name: Install jq
         run: |
@@ -118,6 +111,8 @@ jobs:
     name: Unlocked Package Installation
     if: always() && github.event_name == 'push'
     runs-on: ubuntu-latest
+    container:
+        image: salesforce/cli:latest-slim
 
     steps:
       - name: Checkout Code
@@ -125,15 +120,6 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: Install Node JS
-        uses: actions/setup-node@v4
-        with:
-            node-version: 20
-
-      - name: Install SFDX CLI
-        run: |
-          npm install @salesforce/cli --global
-
       - name: Install jq
         run: |
           sudo apt-get install jq
