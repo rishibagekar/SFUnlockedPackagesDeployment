@@ -47,7 +47,7 @@ jobs:
       - name: Install jq
         shell: bash
         run: |
-          sudo apt-get install jq
+          apt-get install jq
 
       - name: Authorization to DevHub & Create Scratch Org
         run: |
@@ -124,7 +124,7 @@ jobs:
       - name: Install jq
         shell: bash
         run: |
-          sudo apt-get install jq
+          apt-get install jq
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
