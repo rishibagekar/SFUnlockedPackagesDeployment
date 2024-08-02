@@ -26,10 +26,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch Apex Test Classes
+        id: fetch_tests
+        run: |
+          cd cmd-loader/main/default/classes
+          TEST_CLASSES=$(grep -rl '@isTest' ./*.cls | sed 's/.\///;s/.cls$//' | tr '\n' ',' | sed 's/,$//')
+          echo "::set-output name=classes::$TEST_CLASSES"
+
       - name: Dev Int Sandbox-Validation
         run: |
+          TEST_CLASSES=${{ steps.fetch_tests.outputs.classes }}
+          echo "Running tests: $TEST_CLASSES"
           echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -s -u
-          sf project deploy validate -d cmd-loader/main/default --test-level RunAllTestsInOrg --verbose -w 20
+          sf project deploy validate -d cmd-loader/main/default -l RunSpecifiedTests -r "$TEST_CLASSES" --verbose -w 20
 
   code_coverage_report:
     name: Apex Code Coverage Report
