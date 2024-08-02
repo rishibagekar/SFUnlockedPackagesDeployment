@@ -33,6 +33,7 @@ jobs:
 
       - name: Dev Int Sandbox-Validation
         run: |
+          cat test_classes.txt
           TEST_CLASSES=$(cat test_classes.txt | tr '\n' ' ')
           echo "Running tests: $TEST_CLASSES"
           echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -s -u
