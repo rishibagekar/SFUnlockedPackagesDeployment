@@ -36,7 +36,7 @@ jobs:
           TEST_CLASSES=$(cat test_classes.txt | tr '\n' ' ')
           echo "Running tests: $TEST_CLASSES"
           echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -s -u
-          sf project deploy validate -d cmd-loader/main/default -l RunSpecifiedTests -t $TEST_CLASSES --verbose -w 20
+          sf project deploy validate -d cmd-loader/main/default -l RunSpecifiedTests -t "$TEST_CLASSES" --verbose -w 20
 
   code_coverage_report:
     name: Apex Code Coverage Report
