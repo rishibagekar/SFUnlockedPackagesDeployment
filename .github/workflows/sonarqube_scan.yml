@@ -1,0 +1,46 @@
+name: Sonar Cloud Scan
+on: 
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  sonarqube_scan:
+    name: SonarQube Scan
+    runs-on: ubuntu-latest
+    container:
+        image: salesforce/cli:latest-full
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Code Validation & Apex Coverage check
+        run: |
+          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
+          sf org create scratch -f config/project-scratch-def.json -a ci_scratch -y 1
+          find cmd-loader/main/default/classes -name '*Test.cls' -type f | xargs -n 1 basename | sed 's/.cls//' > test_classes.txt
+          TEST_CLASSES=$(cat test_classes.txt | tr '\n' ' ')
+          sf project deploy start -d cmd-loader/main/default -l RunSpecifiedTests -o ci_scratch -t $TEST_CLASSES --verbose -w 20
+
+      - name: Apex Code Coverage Report Generation
+        run: |
+          sf apex run test -c -r json -d ./tests/apex -o ci_scratch -w 20 > test.json
+          coverage=$(jq .result.summary.orgWideCoverage test.json | grep -Eo "[[:digit:]]+")
+          test $coverage -ge 75
+    
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+            
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
