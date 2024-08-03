@@ -1,4 +1,4 @@
-name: Sonar Cloud Scan
+name: SonarQube Scan
 on: 
   schedule:
     - cron: '0 0 * * 0'
