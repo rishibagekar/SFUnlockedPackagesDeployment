@@ -34,8 +34,10 @@ jobs:
 
       - name: Run Apex Tests
         run: |
+          echo ${{secrets.AUTHURL_COPADOINT}} > ./AUTHURL_COPADOINT.txt
+          sfdx force:auth:sfdxurl:store -f ./AUTHURL_COPADOINT.txt -a devint
           cat test_classes.txt | while read test_class; do
-            sfdx force:apex:test:run -c $test_class
+            sfdx force:apex:test:run -c $test_class -o devint
           done
 
       - name: Dev Int Sandbox-Validation
