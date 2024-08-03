@@ -3,11 +3,6 @@ on:
   schedule:
     - cron: '0 0 * * 0'
   workflow_dispatch:
-    inputs:
-      branch:
-        description: SonarQube Scan for entire branch
-        required: true
-        default: main
 
 jobs:
   sonarqube_scan:
