@@ -27,9 +27,15 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch Apex Test Classes
+        id: find-test-classes
         run: |
-          chmod +x test.sh
-          ./test.sh
+          find force-app/main/default/classes -name '*Test.cls' -type f | xargs -n 1 basename | sed 's/.cls//' > test_classes.txt
+
+      - name: Run Apex Tests
+        run: |
+          cat test_classes.txt | while read test_class; do
+            sfdx force:apex:test:run -c $test_class
+          done
 
       - name: Dev Int Sandbox-Validation
         run: |
