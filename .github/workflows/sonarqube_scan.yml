@@ -29,7 +29,7 @@ jobs:
 
       - name: Apex Code Coverage Report Generation
         run: |
-          sf project deploy start
+          sf project deploy start -d cmd-loader/main/default -o ci_scratch
           sf apex run test -c -r json -d ./tests/apex -o ci_scratch -w 20 > test.json
           coverage=$(jq .result.summary.orgWideCoverage test.json | grep -Eo "[[:digit:]]+")
           test $coverage -ge 75
