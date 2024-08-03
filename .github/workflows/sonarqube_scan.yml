@@ -28,7 +28,7 @@ jobs:
           sf org create scratch -f config/project-scratch-def.json -a ci_scratch -y 1
           find cmd-loader/main/default/classes -name '*Test.cls' -type f | xargs -n 1 basename | sed 's/.cls//' > test_classes.txt
           TEST_CLASSES=$(cat test_classes.txt | tr '\n' ' ')
-          sf project deploy start -d cmd-loader/main/default -l RunSpecifiedTests -t $TEST_CLASSES --verbose -w 20
+          sf project deploy start -d cmd-loader/main/default -l RunSpecifiedTests -o ci_scratch -t $TEST_CLASSES --verbose -w 20
 
       - name: Apex Code Coverage Report Generation
         run: |
