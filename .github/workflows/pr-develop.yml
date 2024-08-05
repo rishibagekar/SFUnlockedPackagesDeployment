@@ -12,8 +12,10 @@ on:
 jobs:
   validate_pull_request:
     name: Validation of Pull Request
-    if: always() && github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    container:
+        image: salesforce/cli:latest-full
     env:
       SOURCE_BRANCH: ${{ github.head_ref }}
       TARGET_BRANCH: ${{ github.base_ref }}
@@ -24,43 +26,32 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Node JS
-        uses: actions/setup-node@v4
-        with:
-            node-version: 20
-
-      - name: Install SFDX CLI
+      - name: Fetch Apex Test Classes
+        id: find-test-classes
         run: |
-          npm install @salesforce/cli --global
+          find cmd-loader/main/default/classes -name '*Test.cls' -type f | xargs -n 1 basename | sed 's/.cls//' > test_classes.txt
+          cat test_classes.txt
 
       - name: Dev Int Sandbox-Validation
         run: |
+          cat test_classes.txt
+          TEST_CLASSES=$(cat test_classes.txt | tr '\n' ' ')
+          echo "Running tests: $TEST_CLASSES"
           echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -s -u
-          sf project deploy validate -d cmd-loader/main/default --test-level RunAllTestsInOrg --verbose -w 20
+          sf project deploy validate -d cmd-loader/main/default -l RunSpecifiedTests -t $TEST_CLASSES --verbose -w 20
 
   code_coverage_report:
     name: Apex Code Coverage Report
     needs: validate_pull_request
-    if: always() && github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    container:
+        image: salesforce/cli:latest-full
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Install Node JS
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install SFDX CLI
-        run: |
-          npm install @salesforce/cli --global
-
-      - name: Install jq
-        run: |
-          sudo apt-get install jq
 
       - name: Authorization to DevHub & Create Scratch Org
         run: |
@@ -125,26 +116,15 @@ jobs:
     name: Unlocked Package Installation
     if: always() && github.event_name == 'push'
     runs-on: ubuntu-latest
+    container:
+        image: salesforce/cli:latest-full
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
-      - name: Install Node JS
-        uses: actions/setup-node@v4
-        with:
-            node-version: 20
-
-      - name: Install SFDX CLI
-        run: |
-          npm install @salesforce/cli --global
-
-      - name: Install jq
-        run: |
-          sudo apt-get install jq
-
+        
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
         env:
