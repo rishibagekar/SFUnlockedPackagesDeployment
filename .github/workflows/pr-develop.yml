@@ -187,14 +187,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           PR_NUMBER=${{ env.LATEST_PR }}
-          PR_DETAILS=$(gh pr view $PR_NUMBER --repo ${{ github.repository }} --json title,body,author,createdAt,mergedAt)
+          PR_DETAILS=$(gh pr view $PR_NUMBER --repo ${{ github.repository }} --json number,title,author,changedFiles,createdAt,mergedAt,body,url)
           echo "PR_DETAILS=$PR_DETAILS" >> $GITHUB_ENV
 
       - name: Store new Pull Request details
         run: |
-          echo "Latest Merged PR details: ${{ env.PR_DETAILS }}" >> change_log.json
+          echo -e "\nMerged PR details: ${{ env.PR_DETAILS }}" >> CHANGELOG.md
           git config user.name "release[bot]"
           git config user.email "<>"
-          git add change_log.json
+          git add CHANGELOG.md
           git commit -m "Updating change log file"
           git push
