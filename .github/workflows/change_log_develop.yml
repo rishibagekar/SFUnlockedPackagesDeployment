@@ -9,16 +9,8 @@ jobs:
   track_changes:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Node JS
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Generate changelog
-        run: npx conventional-changelog -p angular -i CHANGELOG.md -s
- 
+        - uses: 8BitJonny/gh-get-current-pr@3.0.0
+          id: PR
+  
+        - run: echo "Your PR number is ${{ steps.PR.outputs.number }} and its JSON is ${{ steps.PR.outputs.pr }}"
+   
