@@ -175,7 +175,7 @@ jobs:
       - name: Get latest merged PR
         id: get_pr
         run: |
-          LATEST_PR=$(gh pr view $PR_NUMBER --repo ${{ github.repository }} --state merged --limit 1 --json number --jq '.[0].number')
+          LATEST_PR=$(gh pr list $PR_NUMBER --repo ${{ github.repository }} --state merged --limit 1 --json number --jq '.[0].number')
           echo "LATEST_PR=$LATEST_PR" >> $GITHUB_ENV
 
       - name: Fetch PR details
