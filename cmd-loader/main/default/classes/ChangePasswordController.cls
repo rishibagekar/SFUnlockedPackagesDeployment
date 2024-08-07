@@ -1,5 +1,5 @@
 /**
- * An apex page controller that exposes the change password functionality testing DEMO  nbv
+ * An apex page controller that exposes the change password functionality testing DEMO  nbv test
  */
 public with sharing class ChangePasswordController {
     public String oldPassword {get; set;}
