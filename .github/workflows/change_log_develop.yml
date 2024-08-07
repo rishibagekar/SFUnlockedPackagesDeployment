@@ -1,0 +1,45 @@
+name: Track Pull Request and Subscriber Version Id
+ 
+on:
+  pull_request:
+    branches: [ develop ]
+    types: [merged]
+ 
+jobs:
+  track_changes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node JS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+  
+      - name: Install SFDX CLI
+        run: |
+          npm install @salesforce/cli --global
+  
+      - name: Install jq
+        run: |
+          sudo apt-get install jq
+
+      - name: Fetch Pull Request Details
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PR_TITLE=${{ github.event.pull_request.title }}
+          MERGED_AT=${{ github.event.pull_request.merged_at }}
+          MERGE_COMMIT_SHA=$(curl -s https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }})
+          echo "PR Number: $PR_NUMBER"
+          echo "PR Title: $PR_TITLE"
+          echo "Merged At: $MERGED_AT"
+          echo "Merge Commit SHA: $MERGE_COMMIT_SHA"
+          echo ${{ secrets.AUTH_COPADOPROD }} | sf org login sfdx-url -d -u
+          PACKAGE_VERSION_ID=$(sf package version list --json | jq -r '.result[0].SubscriberPackageVersionId')
+          echo "Details fetched"
+          echo '{"pr_number": '$PR_NUMBER', "pr_title": "'"$PR_TITLE"'", "merge_commit_sha": "'"$MERGE_COMMIT_SHA"'", "merged_at": "'"$MERGED_AT"'", "Subscriber_Package_Version_Id": "'"$PACKAGE_VERSION_ID"'"}' >> change_log.json
+	        git config user.name "release[bot]"
+          git config user.email "<>"
+          git add change_log.json
+          git commit -m "Update change log file"
+          git push
