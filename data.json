@@ -1,0 +1,7 @@
+{
+  "pr_number": 123,
+  "pr_title": "Feature XYZ",
+  "merge_commit_sha": "abcdef1234567890",
+  "merged_at": "2024-08-07T12:34:56Z",
+  "subscribing_version_id": "04t000000000000"
+}
