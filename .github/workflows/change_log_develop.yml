@@ -37,9 +37,12 @@ jobs:
           echo ${{ secrets.AUTH_COPADOPROD }} | sf org login sfdx-url -d -u
           PACKAGE_VERSION_ID=$(sf package version list --json | jq -r '.result[0].SubscriberPackageVersionId')
           echo "Details fetched"
-          echo '{"pr_number": '$PR_NUMBER', "pr_title": "'"$PR_TITLE"'", "merge_commit_sha": "'"$MERGE_COMMIT_SHA"'", "merged_at": "'"$MERGED_AT"'", "Subscriber_Package_Version_Id": "'"$PACKAGE_VERSION_ID"'"}' >> change_log.json
-	        git config user.name "release[bot]"
+
+      - name: Store new Package Version Id details
+        run: |
+          echo '{"pr_number": '$PR_NUMBER', "pr_title": "'"$PR_TITLE"'", "merge_commit_sha": "'"$MERGE_COMMIT_SHA"'", "merged_at": "'"$MERGED_AT"'", "subscribing_version_id": "'"$PACKAGE_VERSION_ID"'"}' >> change_log.json
+          git config user.name "release[bot]"
           git config user.email "<>"
           git add change_log.json
-          git commit -m "Update change log file"
+          git commit -m "Updating change log file"
           git push
