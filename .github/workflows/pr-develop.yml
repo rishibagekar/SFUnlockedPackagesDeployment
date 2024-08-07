@@ -171,27 +171,22 @@ jobs:
           sf package install -p $new_version_id -w 10 -b 10
           echo "Package Version Installation on Dev Int Successfull"
 
-      - name: Print github Context
-        run: echo "${{ toJson(github) }}"
-
-      - name: Fetch Pull Request Details
+      
+      - name: Get latest merged PR
+        id: get_pr
         run: |
-          PR_NUMBER=${{ github.event.pull_request.number }}
-          PR_TITLE=${{ github.event.pull_request.title }}
-          MERGED_AT=${{ github.event.pull_request.merged_at }}
-          MERGE_COMMIT_SHA=$(curl -s https://api.github.com/repos/${{ github.repository }}/commits/${{ github.sha }})
-          echo "PR Number: $PR_NUMBER"
-          echo "PR Title: $PR_TITLE"
-          echo "Merged At: $MERGED_AT"
-          echo "Merge Commit SHA: $MERGE_COMMIT_SHA"
-          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
-          PACKAGE_VERSION_ID=$(sf package version list --json | jq -r '.result[0].SubscriberPackageVersionId')
-          echo "Package Id: $PACKAGE_VERSION_ID"
-          echo "Details fetched"
+          LATEST_PR=$(gh pr view $PR_NUMBER --repo ${{ github.repository }} --state merged --limit 1 --json number --jq '.[0].number')
+          echo "LATEST_PR=$LATEST_PR" >> $GITHUB_ENV
+
+      - name: Fetch PR details
+        run: |
+          PR_NUMBER=${{ env.LATEST_PR }}
+          PR_DETAILS=$(gh pr view $PR_NUMBER --repo ${{ github.repository }} --json title,body,author,createdAt,mergedAt)
+          echo "PR_DETAILS=$PR_DETAILS" >> $GITHUB_ENV
 
       - name: Store new Pull Request details
         run: |
-          echo '{"pr_number": '$PR_NUMBER', "pr_title": "'"$PR_TITLE"'", "merge_commit_sha": "'"$MERGE_COMMIT_SHA"'", "merged_at": "'"$MERGED_AT"'", "subscribing_version_id": "'"$PACKAGE_VERSION_ID"'"}' >> change_log.json
+          echo "Latest Merged PR details: ${{ env.PR_DETAILS }}" >> change_log.json
           git config user.name "release[bot]"
           git config user.email "<>"
           git add change_log.json
