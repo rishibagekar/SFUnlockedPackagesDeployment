@@ -180,16 +180,3 @@ jobs:
           git add sfdx-project.json
           git commit -m "Updating new pre-release version"
           git push
-
-      - name: Fetch PR details
-        run: |
-          echo "Pull Request Number: ${{ github.pull_request.number }}" >> tracking.csv
-          echo "Merge Commit SHA: ${{ github.sha }}" >> tracking.csv
-          echo "Author: ${{ github.actor }}" >> tracking.csv
-          echo "Merge Date: ${{ github.event.pull_request.merged_at }}" >> tracking.csv
-
-      - name: Package version details
-        run: |
-          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
-          package_version=$(sf package version list --installed --json)
-          echo "Package Version Id: $(echo $package_version | jq '.result[0].SubscriberPackageVersionId')" >> tracking.csv
