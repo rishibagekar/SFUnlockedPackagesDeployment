@@ -183,6 +183,7 @@ jobs:
           echo "Merge Commit SHA: $MERGE_COMMIT_SHA"
           echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
           PACKAGE_VERSION_ID=$(sf package version list --json | jq -r '.result[0].SubscriberPackageVersionId')
+          echo "Package Id: $PACKAGE_VERSION_ID"
           echo "Details fetched"
 
       - name: Store new Pull Request details
