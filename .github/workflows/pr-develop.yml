@@ -171,6 +171,9 @@ jobs:
           sf package install -p $new_version_id -w 10 -b 10
           echo "Package Version Installation on Dev Int Successfull"
 
+      - name: Print github Context
+        run: echo "${{ toJson(github) }}"
+
       - name: Fetch Pull Request Details
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
