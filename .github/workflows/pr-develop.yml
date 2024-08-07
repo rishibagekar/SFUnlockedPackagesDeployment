@@ -171,14 +171,20 @@ jobs:
           sf package install -p $new_version_id -w 10 -b 10
           echo "Package Version Installation on Dev Int Successfull"
 
+      - name: Setup Github CLI
+        run: echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
       
       - name: Get latest merged PR
         id: get_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           LATEST_PR=$(gh pr list $PR_NUMBER --repo ${{ github.repository }} --state merged --limit 1 --json number --jq '.[0].number')
           echo "LATEST_PR=$LATEST_PR" >> $GITHUB_ENV
 
       - name: Fetch PR details
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           PR_NUMBER=${{ env.LATEST_PR }}
           PR_DETAILS=$(gh pr view $PR_NUMBER --repo ${{ github.repository }} --json title,body,author,createdAt,mergedAt)
