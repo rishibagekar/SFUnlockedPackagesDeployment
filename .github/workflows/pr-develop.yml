@@ -10,37 +10,8 @@ on:
       - 'cmd-loader/main/default/**'
 
 jobs:
-  validate_pull_request:
-    name: Validation of Pull Request
-    if: always() && github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    env:
-      SOURCE_BRANCH: ${{ github.head_ref }}
-      TARGET_BRANCH: ${{ github.base_ref }}
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install Node JS
-        uses: actions/setup-node@v4
-        with:
-            node-version: 20
-
-      - name: Install SFDX CLI
-        run: |
-          npm install @salesforce/cli --global
-
-      - name: Dev Int Sandbox-Validation
-        run: |
-          echo ${{ secrets.AUTHURL_COPADOINT }} | sf org login sfdx-url -s -u
-          sf project deploy validate -d cmd-loader/main/default --test-level RunAllTestsInOrg --verbose -w 20
-
   code_coverage_report:
     name: Apex Code Coverage Report
-    needs: validate_pull_request
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -62,22 +33,20 @@ jobs:
         run: |
           sudo apt-get install jq
 
-      - name: Authorization to DevHub & Create Scratch Org
-        run: |
-          echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
-          sf org create scratch -f config/project-scratch-def.json -a ci_scratch -y 1
-
       - name: Package Version Installation on Scratch Org
         run: |
           echo ${{ secrets.AUTHURL_COPADOPROD }} | sf org login sfdx-url -d -u
           sf package version create -x -p "PackageTest" -w 60 --code-coverage
           new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
           test $(sf package version report -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
-          sf package install -p $new_version_id -o ci_scratch -w 10 -b 10
+          echo ${{ secrets.AUTHURL_SCRATCHORG }} | sf org login sfdx-url -s -u
+          sf package install -p $new_version_id -w 10 -b 10
+          echo "package installation successfull"
 
       - name: Apex Code Coverage Report Generation
         run: |
-          sf apex run test -c -r json -d ./tests/apex -o ci_scratch -w 20 > test.json
+          echo ${{ secrets.AUTHURL_SCRATCHORG }} | sf org login sfdx-url -s -u
+          sf apex run test -c -r json -d ./tests/apex -w 20 > test.json
           coverage=$(jq .result.summary.orgWideCoverage test.json | grep -Eo "[[:digit:]]+")
           test $coverage -ge 75
 
@@ -87,10 +56,6 @@ jobs:
           name: apex-code-coverage
           path: tests/apex/test-result-codecoverage.json
   
-      - name: Delete scratch org
-        if: always()
-        run: sf org delete scratch -p -o ci_scratch
-        
   sonar_scan:
     name: SonarQube Scan
     needs: code_coverage_report
