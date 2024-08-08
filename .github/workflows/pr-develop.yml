@@ -1,4 +1,4 @@
-name: Pull Request Workflow for Unlocked Packages Deployment
+name: Pull Request Workflow for Unlocked Packages Deployment testing
 on:
   push:
     branches: [ develop ]
