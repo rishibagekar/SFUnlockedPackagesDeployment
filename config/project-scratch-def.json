@@ -1,0 +1,44 @@
+{
+    "sourceorg": "00DHo000002h60K",
+    "features": [
+      "Communities",
+      "Knowledge",
+      "ServiceCloud",
+      "ContactsToMultipleAccounts",
+      "HealthCloudAddOn",
+      "HealthCloudUser",
+      "PersonAccounts",
+      "IndustriesActionPlan",
+      "DocumentChecklist",
+      "StateAndCountryPicklist"
+    ],
+    "settings": {
+      "communitiesSettings": {
+        "enableNetworksEnabled": true
+      },
+      "omniChannelSettings": {
+        "enableOmniChannel": true
+      },
+      "nameSettings": {
+        "enableMiddleName": true,
+        "enableNameSuffix": true
+      },
+      "caseSettings": {
+        "systemUserEmail": "mohan.krishna@mckesson.com",
+        "emailToCase": {
+          "enableEmailToCase": true
+        }
+      },
+      "customAddressFieldSettings": {
+        "enableCustomAddressField": true
+      },
+      "knowledgeSettings": {
+        "defaultLanguage": "en_US",
+        "enableKnowledge": true,
+        "enableLightningKnowledge": true
+      },
+      "emailAdministrationSettings": {
+        "enableEmailToSalesforce": true
+      }
+    }
+  }

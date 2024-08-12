@@ -1,0 +1,114 @@
+# Disply name value as workflow name under actions tab
+name: Create Scratch Org
+on: 
+  # workflow dispatch is used to run workflow manually. Enables "Run workflow" button
+  workflow_dispatch:
+  # Using inputs, get new scratch and new snapshot details from user
+      inputs:
+        scratch_alias:
+          description: Alias for the scratch org
+          required: true
+        scratch_email:
+          description: Email for the scratch org
+          required: true
+        scratch_description:
+          description: Description for the scratch org
+        scratch_duration_days:
+          description: Duration days for the scratch org. [Max is 30 days]
+          type: number
+          default: 30
+          required: true
+        based_on_snapshot:
+          description: Create scratch based on scratch org snapshot
+          required: true
+          type: boolean
+          default: false
+        source_org_id:
+          description: Source org ID of existing scratch org [Starts with 00Dxxx]
+          type: string
+        snapshot_name:
+          description: Name for the scratch org snapshot. [Name < = 15 char]
+          type: string
+        snapshot_description:
+          description: Description for the scratch org snapshot
+          type: string
+
+jobs:
+  # Create a new scratch org either based on Org Shape or new Scratch Org Snapshot
+  create_scratch:
+    name: Create Scratch
+    runs-on: ubuntu-latest
+    container:
+      image: salesforce/cli:latest-full
+    steps:
+      # Clone repository on runner
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      # Authorize production (devhub) using sfdx-url
+      - name: Authorize DevHub
+        id: auth
+        run: |
+          echo ${{ secrets.AUTHURL_CGATPROD }} | sf org login sfdx-url --sfdx-url-stdin
+      
+      # Create new scratch org based on org shape
+      - name: Create New Scratch Org
+        id: scratch
+        if: ${{ steps.auth.outcome == 'success' && github.event.inputs.based_on_snapshot == 'false'}}
+        run: |
+          sf org create scratch --set-default --definition-file config/project-scratch-def.json --target-dev-hub ${{ secrets.DEVHUB_USERNAME }} --no-namespace --duration-days  ${{ github.event.inputs.scratch_duration_days }}  --wait 30 --description "${{ github.event.inputs.scratch_description }}" --admin-email ${{ github.event.inputs.scratch_email }} --source-org ${{ secrets.DEVHUB_ORG_ID }} --alias ${{ github.event.inputs.scratch_alias }}
+      
+      # Create new scratch org based on new snapshot of existing scratch org | clone of existing scratch
+      - name: Create New Scratch Org Based on New Snapshot
+        id: snapscratch
+        # Condition to check and execute. Conditions are DevHub Authorization must be success and all snapshot input fields are not empty.
+        if: ${{ steps.auth.outcome == 'success' && github.event.inputs.based_on_snapshot == 'true' && github.event.inputs.source_org_id != '' && github.event.inputs.snapshot_name != '' }}
+        # Run will execute 1. Create a scratch defintion file 2. Create org snapshot 3. 
+        run: |
+          mkdir -p config/
+          touch config/project-snapshot-scratch-def.json
+          echo '{ "orgName":"${{ github.event.inputs.scratch_alias }}", "snapshot":"${{ github.event.inputs.snapshot_name }}" }' > config/project-snapshot-scratch-def.json
+          cat config/project-snapshot-scratch-def.json
+          
+          sf org create snapshot --source-org ${{ github.event.inputs.source_org_id }} --target-dev-hub ${{ secrets.DEVHUB_USERNAME }} --name ${{ github.event.inputs.snapshot_name }} --description "${{ github.event.inputs.snapshot_description }}"
+          #!/bin/bash
+          orgGetSnapshotStatus() {
+            sf org get snapshot --snapshot ${{ github.event.inputs.snapshot_name }} --target-dev-hub ${{ secrets.DEVHUB_USERNAME }} --json | jq -r '.result.Status'
+          }
+          while true; do
+            getStatus="$(orgGetSnapshotStatus)"
+            echo $getStatus
+            if [ "$getStatus" = "Active" ]; then
+                echo "Snapshot Creation: SUCCESS."
+                break
+            elif [ "$getStatus" = "Error" | "$getStatus" = "null" ]; then
+                echo "Snapshot Creation: FAIL"
+                exit 1
+            elif [ "$getStatus" = "InProgress" ]; then
+                echo "Snapshot Creation: IN PROGRESS"
+                sleep 600
+            else
+                echo "Can't get Snapshot status"
+                exit 1
+            fi
+          done
+          sleep 300
+          sf org create scratch --set-default --definition-file config/project-snapshot-scratch-def.json --target-dev-hub ${{ secrets.DEVHUB_USERNAME }} --no-namespace --duration-days  ${{ github.event.inputs.scratch_duration_days }}  --wait 30 --description "${{ github.event.inputs.scratch_description }}" --admin-email ${{ github.event.inputs.scratch_email }} --alias ${{ github.event.inputs.scratch_alias }}
+      
+      # Generate a default password for scratch, fetch scratch information/details and logout all authorized orgs from runner
+      - name: Generate Password & Get Scratch Org Info
+        id: genpwd
+        if: ${{ steps.scratch.outcome == 'success' || steps.snapscratch.outcome == 'success' }}
+        run: | 
+          sf org generate password --target-org ${{ github.event.inputs.scratch_alias }}
+          sf org display user --target-org ${{ github.event.inputs.scratch_alias }} | tee -a scratch-org-info.txt
+          sf org logout --all --no-prompt
+      # Store scratch org information/details as an artifact
+      - name: Store Scratch Org Information as Artifact
+        if: ${{ steps.genpwd.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: Scratch Org Information
+          path: scratch-org-info.txt
