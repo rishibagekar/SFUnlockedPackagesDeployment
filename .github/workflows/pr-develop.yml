@@ -1,11 +1,14 @@
 name: Pull Request Workflow for Unlocked Packages Deployment testing
 on:
-  pull_request:
-    types: [opened,synchronize]
+  push:
     branches: [ develop ]
     paths:
       - 'cmd-loader/main/default/**'
-
+  pull_request:
+    branches: [ develop ]
+    paths:
+      - 'cmd-loader/main/default/**'
+      
 jobs:
   validate_pull_request:
     name: Validation of Pull Request
@@ -74,6 +77,49 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  deploy_package:
+    name: Unlocked Package Installation
+    if: always() && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Github CLI
+        run: echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
+
+      - name: Get latest run Id
+        id: getrunid
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+         latestrun=$(gh run list --branch ${{ github.head_ref }} --json databaseId --jq '.[0].databaseId')
+         echo "RUNID=$latestrun" >> $GITHUB_ENV
+
+      - name: Download Apex Code coverage Report
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ env.RUNID }}
+          name: apex-code-coverage-${{ env.RUNID }}
+          path: tests/apex
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
         uses: sonarsource/sonarqube-quality-gate-action@master
