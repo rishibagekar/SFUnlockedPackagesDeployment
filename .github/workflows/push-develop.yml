@@ -1,0 +1,38 @@
+name: Pull Request Workflow for Unlocked Packages Deployment testing
+on:
+  pull_request:
+    types: [ closed ]
+    branches: [ develop ]
+    paths:
+      - 'cmd-loader/main/default/**'
+      
+jobs:
+    build:
+      if: github.event.pull_request.merged == true
+      runs-on: ubuntu-latest
+      steps: 
+       
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Apex Code coverage Report
+        uses: actions/download-artifact@v4
+        with:
+          name: apex-code-coverage
+          path: tests/apex
+          
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
