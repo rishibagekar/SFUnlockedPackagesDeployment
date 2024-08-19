@@ -35,7 +35,7 @@ jobs:
 
       - name: Dev Int Sandbox-Validation
         run: |
-          echo ${{ secrets.AUTHURL_CGATPROD }} | sf org login sfdx-url -d -u
+          echo ${{ secrets.PERSONAL_DEVHUB }} | sf org login sfdx-url -d -u
           sf org create scratch -f config/project-scratch-def.json -a cicdScratch -y 1 -w 30 --name "CICDScratchOrg"
           sf project deploy start -d cmd-loader/main/default -o cicdScratch --test-level RunAllTestsInOrg --verbose -w 20
 
