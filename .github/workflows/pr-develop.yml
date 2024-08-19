@@ -104,14 +104,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-         latestrun=$(gh run list --branch ${{ github.head_ref }} --json databaseId --jq '.[0].databaseId')
-         echo "RUNID=$latestrun" >> $GITHUB_ENV
+          latest_run_id=$(curl -s \
+             -H "Accept: application/vnd.github+json" \
+             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+             https://api.github.com/repos/${{ github.repository }}/actions/runs \
+             | jq '.workflow_runs[] | select(.head_branch=="${{ github.head_ref }}") | .id' | head -n 1)
+          echo "RUN_ID=$latest_run_id" >> $GITHUB_ENV
 
       - name: Download Apex Code coverage Report
         uses: actions/download-artifact@v4
         with:
-          run-id: ${{ env.RUNID }}
-          name: apex-code-coverage-${{ env.RUNID }}
+          run-id: ${{ env.RUN_ID }}
+          name: apex-code-coverage-${{ env.RUN_ID }}
           path: tests/apex
 
       - name: SonarQube Scan
