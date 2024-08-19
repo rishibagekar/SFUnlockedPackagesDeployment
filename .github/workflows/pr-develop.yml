@@ -35,8 +35,9 @@ jobs:
 
       - name: Dev Int Sandbox-Validation
         run: |
-          echo ${{ secrets.PERSONAL_DEVHUB }} | sf org login sfdx-url -s -u
-          sf project deploy start -d cmd-loader/main/default --test-level RunAllTestsInOrg --verbose -w 20
+          echo ${{ secrets.AUTHURL_CGATPROD }} | sf org login sfdx-url -d -u
+          sf org create scratch -f config/project-scratch-def.json -a cicdScratch -y 1 -w 30 --name "CICDScratchOrg"
+          sf project deploy start -d cmd-loader/main/default -o cicdScratch --test-level RunAllTestsInOrg --verbose -w 20
 
   code_coverage_report:
     name: Apex Code Coverage Report
@@ -64,8 +65,7 @@ jobs:
 
       - name: Apex Code Coverage Report Generation
         run: |
-          echo ${{ secrets.PERSONAL_DEVHUB }} | sf org login sfdx-url -s -u
-          sf apex run test -c -r json -d ./tests/apex -w 20 > test.json
+          sf apex run test -c -r json -d ./tests/apex -o cicdScratch -w 20 > test.json
           coverage=$(jq .result.summary.orgWideCoverage test.json | grep -Eo "[[:digit:]]+")
           test $coverage -ge 75
 
@@ -77,7 +77,7 @@ jobs:
   
       - name: Delete scratch org
         if: always()
-        run: sf org delete scratch -p -o ci_scratch
+        run: sf org delete scratch -p -o cicdScratch
         
   sonar_scan:
     name: SonarQube Scan
