@@ -1,11 +1,14 @@
 name: Pull Request Workflow for Unlocked Packages Deployment testing
 on:
-  pull_request:
-    types: [opened,synchronize]
+  push:
     branches: [ develop ]
     paths:
       - 'cmd-loader/main/default/**'
-
+  pull_request:
+    branches: [ develop ]
+    paths:
+      - 'cmd-loader/main/default/**'
+      
 jobs:
   validate_pull_request:
     name: Validation of Pull Request
@@ -62,10 +65,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Get latest run Id
+        id: getrunid
+        run: |
+         latestrun=$(gh run list --branch ${{ github.head_ref }} --json databaseId --jq '.[0].databaseId')
+         echo "RUNID=$latestrun" >> $GITHUB_ENV
+
       - name: Download Apex Code coverage Report
         uses: actions/download-artifact@v4
         with:
-          name: apex-code-coverage
+          run-id: ${{ env.RUNID }}
+          name: apex-code-coverage-${{ env.RUNID }}
           path: tests/apex
 
       - name: SonarQube Scan
