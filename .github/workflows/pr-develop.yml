@@ -39,30 +39,6 @@ jobs:
           sf org create scratch -f config/project-scratch-def.json -a cicdScratch -y 1 -w 30 --name "CICDScratchOrg"
           sf project deploy start -d cmd-loader/main/default -o cicdScratch --test-level RunAllTestsInOrg --verbose -w 20
 
-  code_coverage_report:
-    name: Apex Code Coverage Report
-    needs: validate_pull_request
-    if: always() && github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install Node JS
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install SFDX CLI
-        run: |
-          npm install @salesforce/cli --global
-
-      - name: Install jq
-        run: |
-          sudo apt-get install jq
-
       - name: Apex Code Coverage Report Generation
         run: |
           sf apex run test -c -r json -d ./tests/apex -o cicdScratch -w 20 > test.json
@@ -81,7 +57,7 @@ jobs:
         
   sonar_scan:
     name: SonarQube Scan
-    needs: code_coverage_report
+    needs: validate_pull_request
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
