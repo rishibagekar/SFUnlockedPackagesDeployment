@@ -1,3 +1,6 @@
+ - name: Setup Github CLI
+        run: echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
+
 - name: Setup Github CLI
         run: echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
 
