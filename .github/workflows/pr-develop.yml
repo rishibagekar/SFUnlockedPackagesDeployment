@@ -35,13 +35,13 @@ jobs:
 
       - name: Dev Int Sandbox-Validation
         run: |
-          echo ${{ secrets.PERSONAL_DEVHUB }} | sf org login sfdx-url -d -u
-          sf org create scratch -f config/project-scratch-def.json -a cicdScratch -y 1 -w 30 --name "CICDScratchOrg"
-          sf project deploy start -d cmd-loader/main/default -o cicdScratch --test-level RunAllTestsInOrg --verbose -w 20
+          echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
+          sf project deploy start -d cmd-loader/main/default --test-level RunLocalTests --verbose -w 20
 
       - name: Apex Code Coverage Report Generation
         run: |
-          sf apex run test -c -r json -d ./tests/apex -o cicdScratch -w 20 > test.json
+          echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
+          sf apex run test -c -r json -d ./tests/apex -w 20 > test.json
           coverage=$(jq .result.summary.orgWideCoverage test.json | grep -Eo "[[:digit:]]+")
           test $coverage -ge 75
 
@@ -50,10 +50,7 @@ jobs:
         with:
           name: apex-code-coverage
           path: tests/apex/test-result-codecoverage.json
-  
-      - name: Delete scratch org
-        if: always()
-        run: sf org delete scratch -p -o cicdScratch
+          retention-days: 10
         
   sonar_scan:
     name: SonarQube Scan
@@ -110,6 +107,7 @@ jobs:
              https://api.github.com/repos/${{ github.repository }}/actions/runs \
              | jq '.workflow_runs[] | select(.head_branch=="${{ github.head_ref }}") | .id' | head -n 1)
           echo "RUN_ID=$latest_run_id" >> $GITHUB_ENV
+          echo "RunID=$latest_run_id"
 
       - name: Download Apex Code coverage Report
         uses: actions/download-artifact@v4
@@ -117,6 +115,7 @@ jobs:
           run-id: ${{ env.RUN_ID }}
           name: apex-code-coverage-${{ env.RUN_ID }}
           path: tests/apex
+          github-token: ${{ secrets.GH_TOKEN }}
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
