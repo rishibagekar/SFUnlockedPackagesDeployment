@@ -28,9 +28,9 @@ jobs:
         run: |
           echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
           echo "CICD Scratch Org created successfully"
-          echo "SCRATCH_AUTH_URL=${{ secrets.CICD_SCRATCHORG }}"
+          SCRATCH_AUTH_URL=${{ secrets.CICD_SCRATCHORG }}
           echo $SCRATCH_AUTH_URL
-          echo "SCRATCH_AUTH_URL=$SCRATCH_AUTH_URL" >> $GITHUB_ENV
+          echo "::set-output name=auth_url::$SCRATCH_AUTH_URL"
 
       - name: CICD Scratch Org-Validation & Deployment
         run: |
@@ -96,7 +96,8 @@ jobs:
 
       - name: Unlocked Package Version Installation
         run: |
-          SCRATCH_AUTH_URL=${{ env.SCRATCH_AUTH_URL }}
+          SCRATCH_AUTH_URL=${{ needs.validation_code_coverage.outputs.auth_url }}
+          echo $SCRATCH_AUTH_URL
           echo $SCRATCH_AUTH_URL > ./SCRATCH_AUTH_URL.txt
           cat SCRATCH_AUTH_URL.txt
           sf org login sfdx-url -f ./SCRATCH_AUTH_URL.txt -a cicdScratch
