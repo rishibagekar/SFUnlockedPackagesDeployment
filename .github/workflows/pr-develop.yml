@@ -1,22 +1,22 @@
-name: Pull Request Workflow for Unlocked Packages Deployment testing
+name: develop - Pull Request Workflow
 on:
   push:
-    branches: [ develop ]
+    branches: [develop]
     paths:
-      - 'cmd-loader/main/default/**'
+      - "force-app/main/default/**"
+
   pull_request:
-    branches: [ develop ]
+    branches: [develop]
     paths:
-      - 'cmd-loader/main/default/**'
-      
+      - "force-app/main/default/**"
+
 jobs:
-  validate_pull_request:
-    name: Validation of Pull Request
-    if: always() && github.event_name == 'pull_request'
+  validation_code_coverage:
+    name: Validation & Apex Code Coverage Report
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    env:
-      SOURCE_BRANCH: ${{ github.head_ref }}
-      TARGET_BRANCH: ${{ github.base_ref }}
+    container:
+      image: salesforce/cli:latest-full
 
     steps:
       - name: Checkout Code
@@ -24,36 +24,36 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Node JS
-        uses: actions/setup-node@v4
-        with:
-            node-version: 20
-
-      - name: Install SFDX CLI
+      - name: Create CICD Scratch Org & install dependent packages
         run: |
-          npm install @salesforce/cli --global
+          echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
+          echo "CICD Scratch Org created successfully"
+          echo "SCRATCH_AUTH_URL=${{ secrets.CICD_SCRATCHORG }}"
+          echo $SCRATCH_AUTH_URL
+          echo "SCRATCH_AUTH_URL=$SCRATCH_AUTH_URL" >> $GITHUB_ENV
 
-      - name: Install jq
+      - name: CICD Scratch Org-Validation & Deployment
         run: |
-          sudo apt-get install jq
+            echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
+            sf project deploy start -d cmd-loader/main/default --verbose -w 30
 
       - name: Apex Code Coverage Report Generation
         run: |
           echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
-          sf apex run test -c -r json -d ./tests/apex -w 20 > test.json
+          sf apex run test -c -r json -d ./tests/apex -w 30 > test.json
           coverage=$(jq .result.summary.orgWideCoverage test.json | grep -Eo "[[:digit:]]+")
           test $coverage -ge 75
-
+          echo "Apex Code Coverage Report generated successfully"
+      
       - name: Upload Apex Code Coverage Report
         uses: actions/upload-artifact@v4
         with:
           name: apex-code-coverage
           path: tests/apex/test-result-codecoverage.json
-          retention-days: 10
-        
-  sonar_scan:
+
+  sonarqube_scan:
     name: SonarQube Scan
-    needs: validate_pull_request
+    needs: validation_code_coverage
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -72,7 +72,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          
+
       - name: SonarQube Quality Gate check
         id: sonarqube-quality-gate-check
         uses: sonarsource/sonarqube-quality-gate-action@master
@@ -81,9 +81,30 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
-  deploy_package:
-    name: Unlocked Package Installation
-    if: always() && github.event_name == 'push'
+  install_package_cicdscratch:
+    name: Unlocked Package Installation on CICD Scratch Org
+    needs: [sonarqube_scan]
+    runs-on: ubuntu-latest
+    container:
+      image: salesforce/cli:latest-full
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Unlocked Package Version Installation
+        run: |
+          SCRATCH_AUTH_URL=${{ env.SCRATCH_AUTH_URL }}
+          echo $SCRATCH_AUTH_URL > ./SCRATCH_AUTH_URL.txt
+          cat SCRATCH_AUTH_URL.txt
+          sf org login sfdx-url -f ./SCRATCH_AUTH_URL.txt -a cicdScratch
+          echo "McKesson-CGAT-HUB Package version installation on CICD Scratch Org succeeded"
+
+  code_merge_develop:
+    name: Code Merged from feature to develop branch
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -91,26 +112,53 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
-      - name: Install Node JS
-        uses: actions/setup-node@v4
-        with:
-            node-version: 20
 
-      - name: Install SFDX CLI
+      - name: Fetch Apex Test Classes
+        id: find-test-classes
         run: |
-          npm install @salesforce/cli --global
+          find force-app/main/default/classes -name '*Test.cls' -type f | xargs -n 1 basename | sed 's/.cls//' > test_classes.txt
 
-      - name: Install jq
+      - name: Shared Develop Scratch Org-Validation & Deployment
         run: |
-          sudo apt-get install jq
+          TEST_CLASSES=$(cat test_classes.txt | tr '\n' ' ')
+          echo ${{ secrets.AUTHURL_SHARED_DEVELOP_SCRATCH }} | sf org login sfdx-url -s -u
+          #!/bin/bash
+          if [ "$TEST_CLASSES" = "" ]; then
+            sf project deploy start -d force-app/main/default --verbose -w 30
+          else
+            sf project deploy start -d force-app/main/default -l RunSpecifiedTests -t $TEST_CLASSES --verbose -w 30
+          fi
+          echo "Validation & Deployment on Shared Develop Scratch Org succeeded"
 
       - name: Apex Code Coverage Report Generation
         run: |
-          echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
-          sf apex run test -c -r json -d ./tests/apex -w 20 > test.json
+          echo ${{ secrets.AUTHURL_SHARED_DEVELOP_SCRATCH }} | sf org login sfdx-url -s -u
+          sf apex run test -c -r json -d ./tests/apex -w 30 > test.json
           coverage=$(jq .result.summary.orgWideCoverage test.json | grep -Eo "[[:digit:]]+")
           test $coverage -ge 75
+          echo "Apex Code Coverage Report generated successfully"
+
+      - name: Upload Apex Code Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: apex-code-coverage
+          path: tests/apex/test-result-codecoverage.json  
+
+  sonarqube_scan_develop:
+    name: SonarQube Scan
+    needs: code_merge_develop
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Apex Code coverage Report
+        uses: actions/download-artifact@v4
+        with:
+          name: apex-code-coverage
+          path: tests/apex
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
