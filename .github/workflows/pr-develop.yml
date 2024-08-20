@@ -83,7 +83,7 @@ jobs:
 
   install_package_cicdscratch:
     name: Unlocked Package Installation on CICD Scratch Org
-    needs: [sonarqube_scan]
+    needs: [sonarqube_scan,validation_code_coverage]
     runs-on: ubuntu-latest
     container:
       image: salesforce/cli:latest-full
