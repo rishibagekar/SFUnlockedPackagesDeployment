@@ -33,6 +33,10 @@ jobs:
         run: |
           npm install @salesforce/cli --global
 
+      - name: Install jq
+        run: |
+          sudo apt-get install jq
+
       - name: Apex Code Coverage Report Generation
         run: |
           echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
@@ -87,6 +91,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          
+      - name: Install Node JS
+        uses: actions/setup-node@v4
+        with:
+            node-version: 20
+
+      - name: Install SFDX CLI
+        run: |
+          npm install @salesforce/cli --global
+
+      - name: Install jq
+        run: |
+          sudo apt-get install jq
 
       - name: Apex Code Coverage Report Generation
         run: |
