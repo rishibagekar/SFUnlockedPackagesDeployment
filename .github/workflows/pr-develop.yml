@@ -33,11 +33,6 @@ jobs:
         run: |
           npm install @salesforce/cli --global
 
-      - name: Dev Int Sandbox-Validation
-        run: |
-          echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
-          sf project deploy start -d cmd-loader/main/default --test-level RunLocalTests --verbose -w 20
-
       - name: Apex Code Coverage Report Generation
         run: |
           echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
@@ -93,29 +88,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Github CLI
-        run: echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
-
-      - name: Get latest run Id
-        id: getrunid
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Apex Code Coverage Report Generation
         run: |
-          latest_run_id=$(curl -s \
-             -H "Accept: application/vnd.github+json" \
-             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-             https://api.github.com/repos/${{ github.repository }}/actions/runs \
-             | jq '.workflow_runs[] | select(.head_branch=="${{ github.head_ref }}") | .id' | head -n 1)
-          echo "RUN_ID=$latest_run_id" >> $GITHUB_ENV
-          echo "RunID=$latest_run_id"
-
-      - name: Download Apex Code coverage Report
-        uses: actions/download-artifact@v4
-        with:
-          run-id: ${{ env.RUN_ID }}
-          name: apex-code-coverage-${{ env.RUN_ID }}
-          path: tests/apex
-          github-token: ${{ secrets.GH_TOKEN }}
+          echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
+          sf apex run test -c -r json -d ./tests/apex -w 20 > test.json
+          coverage=$(jq .result.summary.orgWideCoverage test.json | grep -Eo "[[:digit:]]+")
+          test $coverage -ge 75
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
