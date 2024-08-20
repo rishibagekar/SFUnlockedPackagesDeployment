@@ -3,12 +3,12 @@ on:
   push:
     branches: [develop]
     paths:
-      - "force-app/main/default/**"
+      - "cmd-loader/main/default/**"
 
   pull_request:
     branches: [develop]
     paths:
-      - "force-app/main/default/**"
+      - "cmd-loader/main/default/**"
 
 jobs:
   validation_code_coverage:
