@@ -50,6 +50,7 @@ jobs:
         with:
           name: apex-code-coverage
           path: tests/apex/test-result-codecoverage.json
+          retention-days: 10
         
   sonar_scan:
     name: SonarQube Scan
@@ -114,6 +115,7 @@ jobs:
           run-id: ${{ env.RUN_ID }}
           name: apex-code-coverage-${{ env.RUN_ID }}
           path: tests/apex
+          github-token: ${{ secrets.GH_TOKEN }}
 
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
