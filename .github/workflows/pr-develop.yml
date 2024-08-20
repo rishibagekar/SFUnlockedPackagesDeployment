@@ -35,7 +35,7 @@ jobs:
       - name: CICD Scratch Org-Validation & Deployment
         run: |
             echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
-            sf project deploy start -d cmd-loader/main/default --verbose -w 30
+            sf project deploy start -d cmd-loader/main/default --ignore-conflicts --verbose -w 30
 
       - name: Apex Code Coverage Report Generation
         run: |
