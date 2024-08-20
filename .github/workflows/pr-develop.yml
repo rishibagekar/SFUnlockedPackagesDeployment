@@ -28,9 +28,14 @@ jobs:
         run: |
           echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
           echo "CICD Scratch Org created successfully"
-          SCRATCH_AUTH_URL=${{ secrets.CICD_SCRATCHORG }}
-          echo $SCRATCH_AUTH_URL
-          echo "::set-output name=auth_url::$SCRATCH_AUTH_URL"
+          echo "${{ secrets.CICD_SCRATCHORG }}" > sf_auth_url.txt
+          cat sf_auth_url.txt
+
+      - name: Upload auth url
+        uses: actions/upload-artifact@v4
+        with:
+          name: auth-url
+          path: sf_auth_url.txt
 
       - name: CICD Scratch Org-Validation & Deployment
         run: |
@@ -94,13 +99,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Download auth url
+        uses: actions/download-artifact@v4
+        with:
+          name: auth-url
+          path: ./
+          
       - name: Unlocked Package Version Installation
         run: |
-          SCRATCH_AUTH_URL=${{ needs.validation_code_coverage.outputs.auth_url }}
-          echo $SCRATCH_AUTH_URL
-          echo $SCRATCH_AUTH_URL > ./SCRATCH_AUTH_URL.txt
-          cat SCRATCH_AUTH_URL.txt
-          sf org login sfdx-url -f ./SCRATCH_AUTH_URL.txt -a cicdScratch
+          cat sf_auth_url.txt
+          sf org login sfdx-url -f ./sf_auth_url.txt -a cicdScratch
           echo "McKesson-CGAT-HUB Package version installation on CICD Scratch Org succeeded"
 
   code_merge_develop:
