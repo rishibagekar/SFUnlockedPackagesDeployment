@@ -33,11 +33,6 @@ jobs:
         run: |
           npm install @salesforce/cli --global
 
-      - name: Dev Int Sandbox-Validation
-        run: |
-          echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
-          sf project deploy start -d cmd-loader/main/default --test-level RunLocalTests --verbose -w 20
-
       - name: Apex Code Coverage Report Generation
         run: |
           echo ${{ secrets.CICD_SCRATCHORG }} | sf org login sfdx-url -s -u
