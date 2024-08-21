@@ -1,3 +1,9 @@
+- name: Fetch Apex Test Classes
+        id: find-test-classes
+        run: |
+          find force-app/main/default/classes -name '*Test.cls' -type f | xargs -n 1 basename | sed 's/.cls//' > test_classes.txt
+
+ 
  - name: Setup Github CLI
         run: echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
 
