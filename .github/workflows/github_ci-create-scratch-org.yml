@@ -65,6 +65,8 @@ jobs:
           echo "OMNISTUDIO PACKAGE INSTALLATION : SUCCESS"
           sf package install --package 04t4p0000027q4bAAA --wait 30 --publish-wait 30 --no-prompt --target-org ${{ github.event.inputs.scratch_alias }}
           echo "DYNAMIC FLOW PROGRESS PACKAGE INSTALLATION : SUCCESS"
+          sf package install --package 04t1n000001YYCWAA4 --wait 30 --publish-wait 30 --no-prompt --target-org ${{ github.event.inputs.scratch_alias }}
+          echo "UNIVERSAL LOOKUP FIELD COMPONENT PACKAGE INSTALLATION : SUCCESS"
       
       # Create new scratch org based on new snapshot of existing scratch org | clone of existing scratch
       - name: Create New Scratch Org Based on New Snapshot
