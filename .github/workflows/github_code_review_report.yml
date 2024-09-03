@@ -1,0 +1,47 @@
+name: Generate Code Review Report from GitHub
+on:
+  workflow_dispatch:
+    inputs:
+        branch:
+            description: 'Branch to run the workflow'
+            default: 'develop'
+            required: true
+
+jobs:
+  generate-report:
+    name: Generate Code Review Report
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Pull Request Review Details
+        uses: peter-evans/closed-pull-request-review@v2
+        id: pr_review_comments
+        with:
+            token: ${{ secrets.GH_TOKEN }}
+            pull-request-number: ${{ github.event.inputs.pull_request_number }}
+            format: markdown
+
+      - name: Create Markdown Report
+        id: create_report
+        run: |
+          echo "** Code Review Report **" > report.md
+          echo "Pull Request #${{ github.event.inputs.pull_request_number }}" >> report.md
+          echo "Review Comments:" >> report.md
+          echo"${{ steps.pr_review_comments.outputs.body }}" >> report.md
+
+      - name: Convert Markdown to PDF
+        uses: homoluctus/pandoc-action@v1
+        with:
+          filename: report.md
+          output: report.pdf
+    
+      - name: Upload CICD Scratch Org Details
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-review-report
+          path: report.pdf
