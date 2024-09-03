@@ -18,12 +18,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get Pull Request Review Details
-        uses: peter-evans/closed-pull-request-review@v2
+      - name: Get Merged Pull Request Information
+        uses: coin-tracker/get-merged-pull-request@v1.1
         id: pr_review_comments
         with:
-            token: ${{ secrets.GH_TOKEN }}
-            pull-request-number: ${{ github.event.inputs.pull_request_number }}
+            github_token: ${{ secrets.GH_TOKEN }}
+            pull-request-number: ${{ github.event.inputs.number }}
             format: markdown
 
       - name: Create Markdown Report
@@ -34,11 +34,11 @@ jobs:
           echo "Review Comments:" >> report.md
           echo"${{ steps.pr_review_comments.outputs.body }}" >> report.md
 
-      - name: Convert Markdown to PDF
-        uses: homoluctus/pandoc-action@v1
+      - name: Markdown to PDF and HTML
+        uses: BaileyJM02/markdown-to-pdf@v1.2.0    
         with:
-          filename: report.md
-          output: report.pdf
+          input_path: report.md
+          output_dir: report.pdf
     
       - name: Upload CICD Scratch Org Details
         uses: actions/upload-artifact@v4
