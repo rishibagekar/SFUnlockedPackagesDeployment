@@ -2,9 +2,6 @@ name: Generate Code Review Report from GitHub
 on:
   workflow_dispatch:
     inputs:
-        pull_request_number:
-            description: 'Pull Request Number'
-            required: true
         branch:
             description: 'Branch to run the workflow'
             default: 'develop'
