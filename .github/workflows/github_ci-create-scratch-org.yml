@@ -59,9 +59,9 @@ jobs:
         if: ${{ steps.auth.outcome == 'success' && github.event.inputs.based_on_snapshot == 'false'}}
         run: |
           sf org create scratch --set-default --definition-file config/project-scratch-def.json --target-dev-hub ${{ secrets.DEVHUB_USERNAME }} --no-namespace --duration-days  ${{ github.event.inputs.scratch_duration_days }}  --wait 30 --description "${{ github.event.inputs.scratch_description }}" --admin-email ${{ github.event.inputs.scratch_email }} --source-org ${{ secrets.DEVHUB_ORG_ID }} --alias ${{ github.event.inputs.scratch_alias }}
-          sf package install --package 04t4W000002g4EmQAI --wait 30 --publish-wait 30 --no-prompt --target-org ${{ github.event.inputs.scratch_alias }}
+          sf package install --package 04t4W000002PysVQAS --wait 30 --publish-wait 30 --no-prompt --target-org ${{ github.event.inputs.scratch_alias }}
           echo "HEALTH CLOUD PACKAGE INSTALLATION : SUCCESS"
-          sf package install --package 04t4W000003ChfPQAS --wait 30 --publish-wait 30 --no-prompt --target-org ${{ github.event.inputs.scratch_alias }}
+          sf package install --package 04t4W000003ChsLQAS --wait 30 --publish-wait 30 --no-prompt --target-org ${{ github.event.inputs.scratch_alias }}
           echo "OMNISTUDIO PACKAGE INSTALLATION : SUCCESS"
           sf package install --package 04t4p0000027q4bAAA --wait 30 --publish-wait 30 --no-prompt --target-org ${{ github.event.inputs.scratch_alias }}
           echo "DYNAMIC FLOW PROGRESS PACKAGE INSTALLATION : SUCCESS"
