@@ -1,0 +1,316 @@
+name: develop branch - Pull Request Workflow
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "force-app/main/default/**"
+
+  pull_request:
+    branches: [develop]
+    paths:
+      - "force-app/main/default/**"
+
+env:
+  APPNAME: CGAT-HUB-SF-DEV
+  VERACODE_API_ID: ${{secrets.VERACODE_API_ID}}
+  VERACODE_API_KEY: ${{secrets.VERACODE_API_KEY}}
+  SRCCLRTOKEN: ${{secrets.SRCCLRTOKEN}}
+
+jobs:
+  validation_code_coverage:
+    name: Validation & Apex Code Coverage Report
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    container:
+      image: salesforce/cli:latest-full
+
+    env:
+      SOURCE_BRANCH: ${{ github.head_ref }}
+      TARGET_BRANCH: ${{ github.base_ref }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create CICD Scratch Org & Install Dependent Packages
+        run: |
+          echo ${{ secrets.AUTHURL_CGATPROD }} | sf org login sfdx-url -d -u
+          sf org create scratch -f config/project-scratch-def.json -a cicdScratch -y 1 -w 30 -m --name "CICDScratchOrg"
+          echo "CICD Scratch Org created successfully"
+          sf org display -o cicdScratch --verbose --json | jq -r '.result.sfdxAuthUrl' > sfdxAuthUrl.txt
+          sf package install -p 04t4W000002PysVQAS -w 30 -b 30 --no-prompt -o cicdScratch
+          echo "HealthCloud Package installation on CICD Scratch Org succeeded"
+          sf package install -p 04t4W000003ChsLQAS -w 30 -b 30 --no-prompt -o cicdScratch
+          echo "OmniStudio Package installation on CICD Scratch Org succeeded"
+          sf package install -p 04t4p0000027q4bAAA -w 30 -b 30 --no-prompt -o cicdScratch
+          echo "Dynamic Flow Progress Package installation on CICD Scratch Org succeeded"
+          sf package install -p 04t1n000001YYCWAA4 -w 30 -b 30 --no-prompt -o cicdScratch
+          echo "Universal Lookup Field Component Package installation on CICD Scratch Org succeeded"
+          sf package installed list -o cicdScratch
+
+      - name: Upload CICD Scratch Org Details
+        uses: actions/upload-artifact@v4
+        with:
+          name: sfdx-auth-url
+          path: ./sfdxAuthUrl.txt
+
+      - name: Fetch Apex Test Classes
+        id: find-test-classes
+        run: |
+          find force-app/main/default/classes -name '*Test.cls' -type f | xargs -n 1 basename | sed 's/.cls//' | tee test_classes.txt
+
+      - name: CICD Scratch Org-Validation & Deployment
+        run: |
+          TEST_CLASSES=$(cat test_classes.txt | tr '\n' ' ')
+          #!/bin/bash
+          if [ "$TEST_CLASSES" = "" ]; then
+            sf project deploy start -d force-app/main/default -o cicdScratch --verbose -w 30 --ignore-conflicts
+          else
+            sf project deploy start -d force-app/main/default -l RunSpecifiedTests -t $TEST_CLASSES -o cicdScratch --verbose -w 30 --ignore-conflicts
+          fi
+          echo "Validation & Deployment on CICD Scratch Org succeeded"
+
+      - name: Apex Code Coverage Report Generation
+        run: |
+          TEST_CLASSES=$(cat test_classes.txt | tr '\n' ' ')
+          sf apex run test -c -r json -d ./tests/apex -l RunSpecifiedTests -n $TEST_CLASSES -o cicdScratch -w 30 > test.json
+          coverage=$(jq .result.summary.orgWideCoverage test.json | grep -Eo "[[:digit:]]+")
+          test $coverage -ge 75
+          echo "Apex Code Coverage Report generated successfully"
+
+      - name: Upload Apex Code Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: apex-code-coverage
+          path: tests/apex/test-result-codecoverage.json
+
+  sonarqube_scan:
+    name: SonarQube Scan(feature branch)
+    needs: validation_code_coverage
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Apex Code Coverage Report
+        uses: actions/download-artifact@v4
+        with:
+          name: apex-code-coverage
+          path: tests/apex
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate Check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  veracode_scan:
+    name: Veracode Scan(feature branch)
+    needs: validation_code_coverage
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "oracle"
+          java-version: "21"
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Zip Project
+        run: zip -r code-to-be-scanned.zip force-app/main/default
+        env:
+          build-name: code-to-be-scanned.zip
+
+      - name: Upload Zip Project
+        uses: actions/upload-artifact@v4
+        with:
+          name: zipped project
+          path: code-to-be-scanned.zip
+
+      - name: Veracode Upload And Scan
+        uses: veracode/veracode-uploadandscan-action@master
+        with:
+          appname: $APPNAME
+          filepath: "code-to-be-scanned.zip"
+          version: "${{ github.repository }}_${{ github.run_id }}"
+          vid: $VERACODE_API_ID
+          vkey: $VERACODE_API_KEY
+          sandboxname: "Development Sandbox"
+          createprofile: "false"
+          scantimeout: 20
+          debug: "true"
+
+  install_package_cicdscratch:
+    name: Unlocked Package Installation on CICD Scratch Org
+    needs: [sonarqube_scan, veracode_scan]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    container:
+      image: salesforce/cli:latest-full
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download CICD Scratch Org details
+        uses: actions/download-artifact@v4
+        with:
+          name: sfdx-auth-url
+          path: ./
+
+      - name: CICD Scratch Org-Unlocked Package Version Creation
+        run: |
+          echo ${{ secrets.AUTHURL_CGATPROD }} | sf org login sfdx-url -d -u
+          sf package version create -k Mckesson@2024 -p "McKesson-CGAT-HUB" -w 120 --code-coverage
+          echo "McKesson-CGAT-HUB Package version creation succeeded"
+
+      - name: CICD Scratch Org-Unlocked Package Version Installation
+        run: |
+          new_version_id=$(grep -o "04t[[:alnum:]]\{15\}" sfdx-project.json | tail -n1)
+          test $(sf package version report -p $new_version_id --json | jq .result.HasPassedCodeCoverageCheck) = 'true'
+          sf package version report -p $new_version_id
+          sf org login sfdx-url -f ./sfdxAuthUrl.txt -a cicdScratch
+          echo "Successfully Authorized CICD Scratch Org"
+          sf package install -p $new_version_id -k Mckesson@2024 -o cicdScratch -w 30 -b 30 --no-prompt
+          echo "McKesson-CGAT-HUB Package version installation on CICD Scratch Org succeeded"
+
+      - name: Delete scratch org
+        if: always()
+        run: sf org delete scratch -p -o cicdScratch
+
+  code_merge_develop:
+    name: Code Merged from feature to develop branch
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    container:
+      image: salesforce/cli:latest-full
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch Apex Test Classes
+        id: find-test-classes
+        run: |
+          find force-app/main/default/classes -name '*Test.cls' -type f | xargs -n 1 basename | sed 's/.cls//' | tee test_classes.txt
+
+      - name: Shared develop CICD Scratch Org-Validation & Deployment
+        run: |
+          TEST_CLASSES=$(cat test_classes.txt | tr '\n' ' ')
+          echo ${{ secrets.AUTHURL_SHARED_DEVELOP_SCRATCH }} | sf org login sfdx-url -s -u
+          #!/bin/bash
+          if [ "$TEST_CLASSES" = "" ]; then
+            sf project deploy start -d force-app/main/default --verbose -w 30 --ignore-conflicts
+          else
+            sf project deploy start -d force-app/main/default -l RunSpecifiedTests -t $TEST_CLASSES --verbose -w 30 --ignore-conflicts
+          fi
+          echo "Validation & Deployment on Shared Develop Scratch Org succeeded"
+
+      - name: Apex Code Coverage Report Generation
+        run: |
+          TEST_CLASSES=$(cat test_classes.txt | tr '\n' ' ')
+          echo ${{ secrets.AUTHURL_SHARED_DEVELOP_SCRATCH }} | sf org login sfdx-url -s -u
+          sf apex run test -c -r json -d ./tests/apex -l RunSpecifiedTests -n $TEST_CLASSES -w 30 > test.json
+          coverage=$(jq .result.summary.orgWideCoverage test.json | grep -Eo "[[:digit:]]+")
+          test $coverage -ge 75
+          echo "Apex Code Coverage Report generated successfully"
+
+      - name: Upload Apex Code Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: apex-code-coverage
+          path: tests/apex/test-result-codecoverage.json
+
+  sonarqube_scan_develop:
+    name: SonarQube Scan(develop branch)
+    needs: code_merge_develop
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Apex Code Coverage Report
+        uses: actions/download-artifact@v4
+        with:
+          name: apex-code-coverage
+          path: tests/apex
+
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate check
+        id: sonarqube-quality-gate-check
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  veracode_scan_develop:
+    name: Veracode Scan(develop branch)
+    needs: code_merge_develop
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "oracle"
+          java-version: "21"
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Zip Project
+        run: zip -r code-to-be-scanned.zip force-app/main/default
+        env:
+          build-name: code-to-be-scanned.zip
+
+      - name: Upload Zip Project
+        uses: actions/upload-artifact@v4
+        with:
+          name: zipped project
+          path: code-to-be-scanned.zip
+
+      - name: Veracode Upload And Scan
+        uses: veracode/veracode-uploadandscan-action@master
+        with:
+          appname: $APPNAME
+          filepath: "code-to-be-scanned.zip"
+          version: "${{ github.repository }}_${{ github.run_id }}"
+          vid: $VERACODE_API_ID
+          vkey: $VERACODE_API_KEY
+          sandboxname: "Development Sandbox"
+          createprofile: "false"
+          scantimeout: 20
+          debug: "true"
