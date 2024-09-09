@@ -24,7 +24,7 @@ jobs:
         uses: browser-actions/setup-chrome@v1.7.2
 
       - name: Build with Maven
-        run: mvn clean test -Dtest=./demo/src/test/java/com/example/LoginMckessonTest.java -f ./demo/pom.xml
+        run: mvn clean test -Dtest=./demo/src/test/java/com/example/LoginMckessonTest.java
 
       - name: Upload Selenium Report
         uses: actions/upload-artifact@v4
