@@ -18,11 +18,7 @@ jobs:
         with:
           distribution: "oracle"
           java-version: "21"
-
-      - name: Setup Maven
-        uses: actions/setup-maven@v3
-        with:
-          maven-version: 3.9.9
+          cache: maven
 
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1.7.2
