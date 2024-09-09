@@ -27,8 +27,14 @@ jobs:
         run: |
           echo "maven version"
           mvn --version
-          mvn clean test -Dtest=./demo/src/test/java/com/example/LoginMckessonTest.java
+          mvn clean install
 
+      - name: Install Selenium dependency
+        run: mvn dependency:tree
+
+      - name: Run Selenium Test
+        run: mvn test -Dtest=./demo/src/test/java/com/example/LoginMckessonTest.java
+        
       - name: Upload Selenium Report
         uses: actions/upload-artifact@v4
         with:
