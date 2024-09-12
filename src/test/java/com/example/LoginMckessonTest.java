@@ -5,8 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.aventstack.extentreports.ExtentTest;
-
 import com.example.BaseClass;
 import com.example.LoginPageMKH;
 
