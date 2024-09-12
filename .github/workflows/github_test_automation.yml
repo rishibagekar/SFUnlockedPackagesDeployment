@@ -27,7 +27,7 @@ jobs:
           install-chromedriver: true
 
       - name: get directory
-        run: ${{ steps.setup-chrome.outputs.chrome-path }} --version
+        run: ${{ steps.setup-chrome.outputs.chromedriver-path }} --version
 
       - name: Cache Maven packages
         uses: actions/cache@v3
