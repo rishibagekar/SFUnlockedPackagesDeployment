@@ -30,11 +30,6 @@ jobs:
           restore-keys: |
              ${{runner.os}}-maven-
              
-      - name: Maven Build
-        run: |
-           mvn --version
-           mvn clean install -U
-
       - name: Run TestNG test
         run: mvn test
 
