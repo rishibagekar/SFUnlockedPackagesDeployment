@@ -18,7 +18,7 @@ public class BaseClass {
 
 		extent.attachReporter(spark);
 		System.setProperty("webdriver.chrome.driver",
-				"C:\\Users\\eyenims\\Downloads\\Maven_Selenium\\demo\\Drivers\\chromedriver.exe");
+				"Drivers/chromedriver.exe");
 
 		ChromeOptions options = new ChromeOptions();
 		options.addArguments("--disable-notifications");
