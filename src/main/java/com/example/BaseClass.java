@@ -4,19 +4,12 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
-import com.aventstack.extentreports.ExtentReports;
-import com.aventstack.extentreports.reporter.ExtentSparkReporter;
-
 public class BaseClass {
-
-	public static ExtentReports extent = new ExtentReports();
-	static ExtentSparkReporter spark = new ExtentSparkReporter("Extentreport.html");
 
 	protected static WebDriver driver;
 
 	public static void openbrowser() {
 
-		extent.attachReporter(spark);
 		System.setProperty("webdriver.chrome.driver",
 				"C:\\Users\\eyenims\\Downloads\\Maven_Selenium\\demo\\Drivers\\chromedriver.exe");
 
