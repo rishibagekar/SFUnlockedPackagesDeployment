@@ -33,5 +33,12 @@ jobs:
       - name: Run TestNG test
         run: mvn test
 
+      - name: Upload Selenium Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: selenium report
+          path: Extentreport.html
+
             
         
