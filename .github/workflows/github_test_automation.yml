@@ -21,9 +21,13 @@ jobs:
 
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1.7.2
+        id: setup-chrome
         with:
           chrome-version: 128
           install-chromedriver: true
+
+      - name: get directory
+        run: ${{ steps.setup-chrome.outputs.chrome-path }} --version
 
       - name: Cache Maven packages
         uses: actions/cache@v3
