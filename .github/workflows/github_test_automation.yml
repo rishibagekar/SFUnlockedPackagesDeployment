@@ -21,6 +21,9 @@ jobs:
 
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1.7.2
+        with:
+          chrome-version: 128
+          install-chromedriver: true
 
       - name: Cache Maven packages
         uses: actions/cache@v3
@@ -31,7 +34,7 @@ jobs:
              ${{runner.os}}-maven-
              
       - name: Run TestNG test
-        run: mvn -X package
+        run: mvn clean test -Dsurefire.suiteXmlFiles=./testng.xml
 
       - name: Upload Selenium Report
         uses: actions/upload-artifact@v4
