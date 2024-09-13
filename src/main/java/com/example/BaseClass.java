@@ -25,8 +25,6 @@ public class BaseClass {
 
 		WebDriver driver = new ChromeDriver(options);
 		driver.manage().window().maximize();
-		driver.manage().timeouts().pageLoadTimeout(60, TimeUnit.SECONDS);
-		driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
 
 		try {
 
