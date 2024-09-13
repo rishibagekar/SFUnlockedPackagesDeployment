@@ -18,7 +18,7 @@ public class BaseClass {
 
 		extent.attachReporter(spark);
 		System.setProperty("webdriver.chrome.driver",
-				"/opt/hostedtoolcache/setup-chrome/chromedriver/128.0.6613.137/x64/chromedriver");
+				"/opt/hostedtoolcache/setup-chrome/chromedriver/127.0.6533.119/x64/chromedriver");
 
 		ChromeOptions options = new ChromeOptions();
 		options.addArguments("--headless");
