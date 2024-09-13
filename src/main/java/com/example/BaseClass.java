@@ -21,10 +21,12 @@ public class BaseClass {
 				"/opt/hostedtoolcache/setup-chrome/chromedriver/128.0.6613.137/x64/chromedriver");
 
 		ChromeOptions options = new ChromeOptions();
-		options.addArguments("--disable-notifications");
+		options.addArguments("--headless");
 
-		driver = new ChromeDriver(options);
+		WebDriver driver = new ChromeDriver(options);
 		driver.manage().window().maximize();
+		driver.manage().timeouts().pageLoadTimeout(60, TimeUnit.SECONDS);
+		driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
 
 		try {
 
