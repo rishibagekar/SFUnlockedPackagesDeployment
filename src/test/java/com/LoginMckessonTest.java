@@ -18,7 +18,7 @@ public class LoginMckessonTest {
 
 	@Test
 	public void logintoSalesforce(){
-		driver.get("https://ability-data-1503--cgatqa.sandbox.my.salesforce.com")
+		driver.get("https://ability-data-1503--cgatqa.sandbox.my.salesforce.com");
 		driver.findElement(By.id("username")).sendKeys("rishikesh.bagekar@mckesson.com.cgatqa");
 		driver.findElement(By.id("password")).sendKeys("Rishi@$039925");
 		driver.findElement(By.id("loginBtn")).click();
