@@ -21,9 +21,9 @@ public class BaseClass {
 				"/opt/hostedtoolcache/setup-chrome/chromedriver/127.0.6533.119/x64/chromedriver");
 
 		ChromeOptions options = new ChromeOptions();
-		options.addArguments("--headless");
+		options.addArguments("--disable-notifications");
 
-		WebDriver driver = new ChromeDriver(options);
+		driver = new ChromeDriver(options);
 		driver.manage().window().maximize();
 
 		try {
