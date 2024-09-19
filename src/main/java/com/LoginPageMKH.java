@@ -18,12 +18,7 @@ public class LoginPageMKH extends BaseClass {
 	@CacheLookup
 	private WebElement LoginButton;
 	
-	public LoginPageMKH(WebDriver driver) {
-
-		PageFactory.initElements(driver, this);
-
-	}
-	
+	protected static WebDriver driver;
 	
 	public void username() {
 
