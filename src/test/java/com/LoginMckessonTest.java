@@ -14,10 +14,9 @@ public class LoginMckessonTest extends BaseClass {
 
 	private static Logger Logger = LogManager.getLogger(LoginMckessonTest.class);
 
-	@BeforeMethod
 	public void browserlaunch() throws InterruptedException {
 
-		openbrowser();
+		BaseClass.openbrowser();
 		Thread.sleep(2000);
 		extent.flush();
 
