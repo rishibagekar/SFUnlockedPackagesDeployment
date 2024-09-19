@@ -6,9 +6,6 @@ import org.openqa.selenium.support.CacheLookup;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 
-import com.BaseClass;
-import com.LoginMckessonTest;
-
 public class LoginPageMKH extends BaseClass {
 	
 	@FindBy(xpath="//input[@class='input r4 wide mb16 mt8 username']")
