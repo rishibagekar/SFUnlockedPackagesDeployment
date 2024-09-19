@@ -19,12 +19,7 @@ public class LoginPageMKH extends BaseClass {
 	private WebElement LoginButton;
 	
 
-	public LoginPageMKH(WebDriver driver) {
-
-		PageFactory.initElements(driver, this);
-
-	}
-
+	
 	
 	public void username() {
 
