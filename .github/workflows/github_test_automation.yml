@@ -37,7 +37,8 @@ jobs:
 
     - name: Make ChromeDriver executable
       run: chmod +x /opt/hostedtoolcache/setup-chrome/chromedriver/127.0.6533.119/x64/chromedriver
+      
     - name: Build with Maven
-      run: mvn test
+      run: mvn -B package --file pom.xml
 
    
