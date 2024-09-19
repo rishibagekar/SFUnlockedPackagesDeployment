@@ -1,30 +1,43 @@
+package com;
 
-import org.openqa.selenium.By;
-import  org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test; 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
-public class LoginMckessonTest {
+import com.aventstack.extentreports.ExtentTest;
 
-	private WebDriver driver;
-	@BeforeTest
-	public void setUp(){
-		System.setProperty("webdriver.chrome.driver","/opt/hostedtoolcache/setup-chrome/chromedriver/127.0.6533.119/x64/chromedriver");
-		driver = new ChromeDriver();
+import com.example.BaseClass;
+import com.example.LoginPageMKH;
+
+public class LoginMckessonTest extends BaseClass {
+
+	private static Logger Logger = LogManager.getLogger(LoginMckessonTest.class);
+
+	@BeforeMethod
+	public void browserlaunch() throws InterruptedException {
+
+		openbrowser();
+		Thread.sleep(2000);
+		extent.flush();
+
 	}
 
 	@Test
-	public void logintoSalesforce(){
-		driver.get("https://ability-data-1503--cgatqa.sandbox.my.salesforce.com");
-		driver.findElement(By.id("username")).sendKeys("rishikesh.bagekar@mckesson.com.cgatqa");
-		driver.findElement(By.id("password")).sendKeys("Rishi@$039925");
-		driver.findElement(By.id("loginBtn")).click();
+	public void loginprocess() throws InterruptedException {
+
+		ExtentTest test = extent.createTest("Login Process Verification");
+
+		LoginPageMKH LP = new LoginPageMKH(driver);
+		Logger.info("Add  credentials");
+
+		LP.username();
+		LP.Password();
+		LP.LoginBTW();
+
+		Logger.info("Login done now ");
+		Thread.sleep(2000);
+		extent.flush();
 	}
 
-	@AfterTest
-	public void tearDowb(){
-		driver.quit();
-	}
 }
