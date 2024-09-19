@@ -7,8 +7,8 @@ import org.testng.annotations.Test;
 
 import com.aventstack.extentreports.ExtentTest;
 
-import com.example.BaseClass;
-import com.example.LoginPageMKH;
+import com.BaseClass;
+import com.LoginPageMKH;
 
 public class LoginMckessonTest extends BaseClass {
 
