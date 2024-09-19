@@ -27,7 +27,7 @@ public class LoginMckessonTest extends BaseClass {
 
 		ExtentTest test = extent.createTest("Login Process Verification");
 
-		LoginPageMKH LP = new LoginPageMKH(driver);
+		LoginPageMKH LP = new LoginPageMKH(BaseClass.driver);
 		Logger.info("Add  credentials");
 
 		LP.username();
