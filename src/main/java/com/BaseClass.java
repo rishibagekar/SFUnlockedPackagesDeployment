@@ -7,6 +7,9 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.reporter.ExtentSparkReporter;
 
+import com.LoginPageMKH;
+import com.LoginMckessonTest;
+
 public class BaseClass {
 
 	public static ExtentReports extent = new ExtentReports();
