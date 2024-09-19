@@ -17,8 +17,9 @@ public class LoginPageMKH extends BaseClass {
 	@FindBy(xpath="//input[@id='Login']")
 	@CacheLookup
 	private WebElement LoginButton;
-	
+	WebDriver driver;
 	public LoginPageMKH(WebDriver driver) {
+		this.driver=driver;
 		PageFactory.initElements(driver, this);
 	}
 	
