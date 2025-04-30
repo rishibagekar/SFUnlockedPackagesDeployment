@@ -1,5 +1,5 @@
 /**
- * An apex page controller that exposes the change password functionality bht bgh
+ * An apex page controller that exposes the change password functionality bht bghvvb
  */
 public with sharing class ChangePasswordController {
     public String oldPassword {get; set;}
